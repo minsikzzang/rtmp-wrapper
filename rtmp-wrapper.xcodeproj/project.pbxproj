@@ -8,8 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		937D48F217FA2B4000E59556 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 937D48F117FA2B4000E59556 /* Foundation.framework */; };
-		937D48F717FA2B4000E59556 /* rtmp_wrapper.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 937D48F617FA2B4000E59556 /* rtmp_wrapper.h */; };
-		937D48F917FA2B4000E59556 /* rtmp_wrapper.m in Sources */ = {isa = PBXBuildFile; fileRef = 937D48F817FA2B4000E59556 /* rtmp_wrapper.m */; };
+		937D48F717FA2B4000E59556 /* RtmpWrapper.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 937D48F617FA2B4000E59556 /* RtmpWrapper.h */; };
+		937D48F917FA2B4000E59556 /* RtmpWrapper.m in Sources */ = {isa = PBXBuildFile; fileRef = 937D48F817FA2B4000E59556 /* RtmpWrapper.m */; };
 		937D490017FA2B4000E59556 /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 937D48FF17FA2B4000E59556 /* XCTest.framework */; };
 		937D490117FA2B4000E59556 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 937D48F117FA2B4000E59556 /* Foundation.framework */; };
 		937D490317FA2B4000E59556 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 937D490217FA2B4000E59556 /* UIKit.framework */; };
@@ -35,7 +35,7 @@
 			dstPath = "include/$(PRODUCT_NAME)";
 			dstSubfolderSpec = 16;
 			files = (
-				937D48F717FA2B4000E59556 /* rtmp_wrapper.h in CopyFiles */,
+				937D48F717FA2B4000E59556 /* RtmpWrapper.h in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -45,8 +45,8 @@
 		937D48EE17FA2B4000E59556 /* librtmp-wrapper.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "librtmp-wrapper.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		937D48F117FA2B4000E59556 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		937D48F517FA2B4000E59556 /* rtmp-wrapper-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "rtmp-wrapper-Prefix.pch"; sourceTree = "<group>"; };
-		937D48F617FA2B4000E59556 /* rtmp_wrapper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = rtmp_wrapper.h; sourceTree = "<group>"; };
-		937D48F817FA2B4000E59556 /* rtmp_wrapper.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = rtmp_wrapper.m; sourceTree = "<group>"; };
+		937D48F617FA2B4000E59556 /* RtmpWrapper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RtmpWrapper.h; sourceTree = "<group>"; };
+		937D48F817FA2B4000E59556 /* RtmpWrapper.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = RtmpWrapper.m; sourceTree = "<group>"; };
 		937D48FE17FA2B4000E59556 /* rtmp-wrapperTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "rtmp-wrapperTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		937D48FF17FA2B4000E59556 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
 		937D490217FA2B4000E59556 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = Library/Frameworks/UIKit.framework; sourceTree = DEVELOPER_DIR; };
@@ -110,8 +110,8 @@
 		937D48F317FA2B4000E59556 /* rtmp-wrapper */ = {
 			isa = PBXGroup;
 			children = (
-				937D48F617FA2B4000E59556 /* rtmp_wrapper.h */,
-				937D48F817FA2B4000E59556 /* rtmp_wrapper.m */,
+				937D48F617FA2B4000E59556 /* RtmpWrapper.h */,
+				937D48F817FA2B4000E59556 /* RtmpWrapper.m */,
 				937D48F417FA2B4000E59556 /* Supporting Files */,
 			);
 			path = "rtmp-wrapper";
@@ -224,7 +224,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				937D48F917FA2B4000E59556 /* rtmp_wrapper.m in Sources */,
+				937D48F917FA2B4000E59556 /* RtmpWrapper.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -331,6 +331,7 @@
 		937D491217FA2B4000E59556 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_OBJC_ARC = NO;
 				DSTROOT = /tmp/rtmp_wrapper.dst;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "rtmp-wrapper/rtmp-wrapper-Prefix.pch";
@@ -343,6 +344,7 @@
 		937D491317FA2B4000E59556 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_OBJC_ARC = NO;
 				DSTROOT = /tmp/rtmp_wrapper.dst;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "rtmp-wrapper/rtmp-wrapper-Prefix.pch";
@@ -356,6 +358,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ARCHS = "$(ARCHS_STANDARD_INCLUDING_64_BIT)";
+				CLANG_ENABLE_OBJC_ARC = NO;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(SDKROOT)/Developer/Library/Frameworks",
 					"$(inherited)",
@@ -377,6 +380,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ARCHS = "$(ARCHS_STANDARD_INCLUDING_64_BIT)";
+				CLANG_ENABLE_OBJC_ARC = NO;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(SDKROOT)/Developer/Library/Frameworks",
 					"$(inherited)",
