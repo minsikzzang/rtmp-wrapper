@@ -15,8 +15,12 @@
 		937D490317FA2B4000E59556 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 937D490217FA2B4000E59556 /* UIKit.framework */; };
 		937D490617FA2B4000E59556 /* librtmp-wrapper.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 937D48EE17FA2B4000E59556 /* librtmp-wrapper.a */; };
 		937D490C17FA2B4000E59556 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 937D490A17FA2B4000E59556 /* InfoPlist.strings */; };
-		937D490E17FA2B4000E59556 /* rtmp_wrapperTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 937D490D17FA2B4000E59556 /* rtmp_wrapperTests.m */; };
+		937D490E17FA2B4000E59556 /* RtmpWrapperTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 937D490D17FA2B4000E59556 /* RtmpWrapperTests.m */; };
 		937D49F617FA310E00E59556 /* libz.1.2.5.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 937D49F517FA310E00E59556 /* libz.1.2.5.dylib */; };
+		A43FA6B017FB178200CBD72F /* libcrypto.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A43FA6AD17FB178200CBD72F /* libcrypto.a */; };
+		A43FA6B117FB178200CBD72F /* librtmp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A43FA6AE17FB178200CBD72F /* librtmp.a */; };
+		A43FA6B217FB178200CBD72F /* libssl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A43FA6AF17FB178200CBD72F /* libssl.a */; };
+		A43FA6B417FB1BCB00CBD72F /* bbcw.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = A43FA6B317FB1BCB00CBD72F /* bbcw.mp4 */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -53,8 +57,12 @@
 		937D490217FA2B4000E59556 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = Library/Frameworks/UIKit.framework; sourceTree = DEVELOPER_DIR; };
 		937D490917FA2B4000E59556 /* rtmp-wrapperTests-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "rtmp-wrapperTests-Info.plist"; sourceTree = "<group>"; };
 		937D490B17FA2B4000E59556 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
-		937D490D17FA2B4000E59556 /* rtmp_wrapperTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = rtmp_wrapperTests.m; sourceTree = "<group>"; };
+		937D490D17FA2B4000E59556 /* RtmpWrapperTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = RtmpWrapperTests.m; sourceTree = "<group>"; };
 		937D49F517FA310E00E59556 /* libz.1.2.5.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libz.1.2.5.dylib; path = usr/lib/libz.1.2.5.dylib; sourceTree = SDKROOT; };
+		A43FA6AD17FB178200CBD72F /* libcrypto.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libcrypto.a; path = "librtmp-iOS/lib/libcrypto.a"; sourceTree = "<group>"; };
+		A43FA6AE17FB178200CBD72F /* librtmp.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = librtmp.a; path = "librtmp-iOS/lib/librtmp.a"; sourceTree = "<group>"; };
+		A43FA6AF17FB178200CBD72F /* libssl.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libssl.a; path = "librtmp-iOS/lib/libssl.a"; sourceTree = "<group>"; };
+		A43FA6B317FB1BCB00CBD72F /* bbcw.mp4 */ = {isa = PBXFileReference; lastKnownFileType = file; name = bbcw.mp4; path = ../../../../Users/minkim/Desktop/bbcw.mp4; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -70,6 +78,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A43FA6B017FB178200CBD72F /* libcrypto.a in Frameworks */,
+				A43FA6B117FB178200CBD72F /* librtmp.a in Frameworks */,
+				A43FA6B217FB178200CBD72F /* libssl.a in Frameworks */,
 				937D49F617FA310E00E59556 /* libz.1.2.5.dylib in Frameworks */,
 				937D490617FA2B4000E59556 /* librtmp-wrapper.a in Frameworks */,
 				937D490017FA2B4000E59556 /* XCTest.framework in Frameworks */,
@@ -103,6 +114,9 @@
 		937D48F017FA2B4000E59556 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				A43FA6AD17FB178200CBD72F /* libcrypto.a */,
+				A43FA6AE17FB178200CBD72F /* librtmp.a */,
+				A43FA6AF17FB178200CBD72F /* libssl.a */,
 				937D49F517FA310E00E59556 /* libz.1.2.5.dylib */,
 				937D48F117FA2B4000E59556 /* Foundation.framework */,
 				937D48FF17FA2B4000E59556 /* XCTest.framework */,
@@ -132,7 +146,8 @@
 		937D490717FA2B4000E59556 /* rtmp-wrapperTests */ = {
 			isa = PBXGroup;
 			children = (
-				937D490D17FA2B4000E59556 /* rtmp_wrapperTests.m */,
+				A43FA6B317FB1BCB00CBD72F /* bbcw.mp4 */,
+				937D490D17FA2B4000E59556 /* RtmpWrapperTests.m */,
 				937D490817FA2B4000E59556 /* Supporting Files */,
 			);
 			path = "rtmp-wrapperTests";
@@ -218,6 +233,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				937D490C17FA2B4000E59556 /* InfoPlist.strings in Resources */,
+				A43FA6B417FB1BCB00CBD72F /* bbcw.mp4 in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -236,7 +252,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				937D490E17FA2B4000E59556 /* rtmp_wrapperTests.m in Sources */,
+				937D490E17FA2B4000E59556 /* RtmpWrapperTests.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -392,18 +408,16 @@
 					"DEBUG=1",
 					"$(inherited)",
 				);
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
+					"librtmp-iOS/include",
+				);
 				INFOPLIST_FILE = "rtmp-wrapperTests/rtmp-wrapperTests-Info.plist";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					"/ifactory/experimentals/rtmp-wrapper/librtmp-iOS/lib",
-					"/ifactory/experimentals/rtmp-wrapper/librtmp-iOS/librtmp/lib",
-					"/ifactory/experimentals/rtmp-wrapper/librtmp-iOS/openssl/lib",
-					"/ifactory/experimentals/librtmp-iOS/bin/iPhoneOS7.0-arm64.sdk/lib",
-					"/ifactory/experimentals/librtmp-iOS/bin/iPhoneOS7.0-armv7.sdk/lib",
-					"/ifactory/experimentals/librtmp-iOS/bin/iPhoneOS7.0-armv7s.sdk/lib",
-					"/ifactory/experimentals/librtmp-iOS/bin/iPhoneSimulator7.0-i386.sdk/lib",
-					"/ifactory/experimentals/librtmp-iOS/lib",
-					"/ifactory/experimentals/librtmp-iOS/librtmp/lib",
+					"librtmp-iOS/lib",
+					"/livestation/benchmarks/rtmp-wrapper/librtmp-iOS/lib",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				VALID_ARCHS = i386;
@@ -423,18 +437,16 @@
 				);
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "rtmp-wrapper/rtmp-wrapper-Prefix.pch";
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
+					"librtmp-iOS/include",
+				);
 				INFOPLIST_FILE = "rtmp-wrapperTests/rtmp-wrapperTests-Info.plist";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					"/ifactory/experimentals/rtmp-wrapper/librtmp-iOS/lib",
-					"/ifactory/experimentals/rtmp-wrapper/librtmp-iOS/librtmp/lib",
-					"/ifactory/experimentals/rtmp-wrapper/librtmp-iOS/openssl/lib",
-					"/ifactory/experimentals/librtmp-iOS/bin/iPhoneOS7.0-arm64.sdk/lib",
-					"/ifactory/experimentals/librtmp-iOS/bin/iPhoneOS7.0-armv7.sdk/lib",
-					"/ifactory/experimentals/librtmp-iOS/bin/iPhoneOS7.0-armv7s.sdk/lib",
-					"/ifactory/experimentals/librtmp-iOS/bin/iPhoneSimulator7.0-i386.sdk/lib",
-					"/ifactory/experimentals/librtmp-iOS/lib",
-					"/ifactory/experimentals/librtmp-iOS/librtmp/lib",
+					"librtmp-iOS/lib",
+					"/livestation/benchmarks/rtmp-wrapper/librtmp-iOS/lib",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				VALID_ARCHS = i386;
