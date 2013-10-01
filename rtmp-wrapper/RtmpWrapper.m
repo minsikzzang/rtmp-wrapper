@@ -81,7 +81,7 @@ static void rtmpLog(int level, const char *fmt, va_list args) {
   }
 }
 
-- (int)rtmpWrite:(NSData *)data {
+- (NSUInteger)rtmpWrite:(NSData *)data {
   return RTMP_Write(rtmp_, [data bytes], [data length]);;
 }
 

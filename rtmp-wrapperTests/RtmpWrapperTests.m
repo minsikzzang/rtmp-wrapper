@@ -46,6 +46,9 @@ NSString const* kRtmpEP = @"rtmp://media18.lsops.net/live/test";
       [NSData dataWithContentsOfURL:
         [NSURL URLWithString:@"http://bcn01.livestation.com/test.flv"]];
     NSLog(@"original video length: %d", [video length]);
+    NSUInteger videoLength = [video length];
+    
+    /*
     NSUInteger length = [video length];
     NSUInteger chunkSize = 100 * 1024;
     NSUInteger offset = 0;
@@ -59,6 +62,8 @@ NSString const* kRtmpEP = @"rtmp://media18.lsops.net/live/test";
       // Write new chunk to rtmp server
       NSLog(@"%d", [rtmp rtmpWrite:chunk]);
     } while (offset < length);
+     */
+    XCTAssertEqual([rtmp rtmpWrite:video], videoLength);
   }
   
   [rtmp rtmpClose];

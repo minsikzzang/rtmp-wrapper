@@ -28,6 +28,6 @@
 
 - (void)rtmpClose;
 
-- (int)rtmpWrite:(NSData *)data;
+- (NSUInteger)rtmpWrite:(NSData *)data;
 
 @end
