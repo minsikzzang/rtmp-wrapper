@@ -7,12 +7,14 @@
 //
 
 #import "RtmpWrapper.h"
+#import "NSData+Hex.h"
 
 #import <librtmp/rtmp.h>
 #import <librtmp/log.h>
 
 @interface RtmpWrapper () {
   RTMP *rtmp_;
+  BOOL headerSent_;
 }
 
 @end
@@ -71,6 +73,7 @@ static void rtmpLog(int level, const char *fmt, va_list args) {
     return NO;
   }
   
+  headerSent_ = NO;
   return YES;
 }
 
@@ -82,7 +85,51 @@ static void rtmpLog(int level, const char *fmt, va_list args) {
 }
 
 - (NSUInteger)rtmpWrite:(NSData *)data {
-  return RTMP_Write(rtmp_, [data bytes], [data length]);;
+  int bufSize = [data length];
+  const char *buf = [data bytes];
+  
+  /*
+  if (buf[0] == 'F' && buf[1] == 'L' && buf[2] == 'V') {
+    NSLog(@"FLV HEADER\n%@", [[NSData dataWithBytes:buf length:13] hexString]);
+    buf += 13;
+    bufSize -= 13;
+  }
+*/
+
+  while (bufSize > 0) {
+    if (buf[0] == 'F' && buf[1] == 'L' && buf[2] == 'V') {
+      NSLog(@"FLV HEADER\n%@", [[NSData dataWithBytes:buf length:13] hexString]);
+      if (!headerSent_) {
+        headerSent_ = YES;
+      } else {
+        NSLog(@"NO GOOD");
+      }
+      buf += 13;
+      bufSize -= 13;
+    }
+
+    char packetType = *buf++;
+    int bodySize = AMF_DecodeInt24(buf);
+    buf += 3;
+    int timeStamp = AMF_DecodeInt24(buf);
+    buf += 3;
+    timeStamp |= *buf++ << 24;
+    
+    bufSize -= 11;
+    NSLog(@"PacketType: 0x%02x, bodySize: %d, timestamp: %d", packetType, bodySize, timeStamp);
+    NSLog(@"PacketHeader: %@", [[NSData dataWithBytes:(buf - 11) length:11] hexString]);
+    
+    if (packetType == RTMP_PACKET_TYPE_INFO) {
+      NSLog(@"PacketInfo: \n%@", [[NSData dataWithBytes:buf length:bodySize] hexString]);
+    }
+    
+    bufSize -= (bodySize);
+    buf += (bodySize);
+  }
+  return 0;
+
+  // return RTMP_Write(rtmp_, buf, bufSize);
+  // return RTMP_Write(rtmp_, [data bytes], [data length]);
 }
 
 @end
