@@ -85,17 +85,19 @@ static void rtmpLog(int level, const char *fmt, va_list args) {
 }
 
 - (NSUInteger)rtmpWrite:(NSData *)data {
-  int bufSize = [data length];
-  const char *buf = [data bytes];
   
   /*
+  int bufSize = [data length];
+  const char *buf = [data bytes];
+   */
+/*
   if (buf[0] == 'F' && buf[1] == 'L' && buf[2] == 'V') {
     NSLog(@"FLV HEADER\n%@", [[NSData dataWithBytes:buf length:13] hexString]);
     buf += 13;
     bufSize -= 13;
   }
 */
-
+  /*
   while (bufSize > 0) {
     if (buf[0] == 'F' && buf[1] == 'L' && buf[2] == 'V') {
       NSLog(@"FLV HEADER\n%@", [[NSData dataWithBytes:buf length:13] hexString]);
@@ -115,21 +117,20 @@ static void rtmpLog(int level, const char *fmt, va_list args) {
     buf += 3;
     timeStamp |= *buf++ << 24;
     
+    NSLog(@"TagHeader\n%@", [[NSData dataWithBytes:buf - 8 length:11] hexString]);
     bufSize -= 11;
-    NSLog(@"PacketType: 0x%02x, bodySize: %d, timestamp: %d", packetType, bodySize, timeStamp);
-    NSLog(@"PacketHeader: %@", [[NSData dataWithBytes:(buf - 11) length:11] hexString]);
-    
-    if (packetType == RTMP_PACKET_TYPE_INFO) {
-      NSLog(@"PacketInfo: \n%@", [[NSData dataWithBytes:buf length:bodySize] hexString]);
-    }
-    
-    bufSize -= (bodySize);
-    buf += (bodySize);
+    NSLog(@"TagBody\n%@", [[NSData dataWithBytes:(buf) length:bodySize] hexString]);
+    bufSize -= bodySize;
+    buf += bodySize;
+    NSLog(@"TagTail\n%@", [[NSData dataWithBytes:(buf) length:4] hexString]);
+    bufSize -= 4;
+    buf += 4;
   }
   return 0;
-
+*/
   // return RTMP_Write(rtmp_, buf, bufSize);
-  // return RTMP_Write(rtmp_, [data bytes], [data length]);
+   
+  return RTMP_Write(rtmp_, [data bytes], [data length]);
 }
 
 @end
