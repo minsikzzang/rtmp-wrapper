@@ -62,8 +62,8 @@ NSString const* kRtmpEP = @"rtmp://media18.lsops.net/live/test";
       // Write new chunk to rtmp server
       NSLog(@"%d", [rtmp rtmpWrite:chunk]);
     } while (offset < length);
+     XCTAssertEqual([rtmp rtmpWrite:video], videoLength);
      */
-    XCTAssertEqual([rtmp rtmpWrite:video], videoLength);
   }
   
   [rtmp rtmpClose];
