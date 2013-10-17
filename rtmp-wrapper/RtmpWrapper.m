@@ -14,7 +14,7 @@
 
 @interface RtmpWrapper () {
   RTMP *rtmp_;
-  BOOL headerSent_;
+  BOOL rtmpOpen_;
 }
 
 @end
@@ -44,11 +44,15 @@ static void rtmpLog(int level, const char *fmt, va_list args) {
   if (self != nil) {
     // Allocate rtmp context object
     rtmp_ = RTMP_Alloc();
+    rtmpOpen_ = NO;
   }
   return self;
 }
 
 - (void)dealloc {
+  if (rtmpOpen_) {
+    [self rtmpClose];
+  }
   // Release rtmp context
   RTMP_Free(rtmp_);
   
@@ -68,68 +72,22 @@ static void rtmpLog(int level, const char *fmt, va_list args) {
   if (enableWrite) {
     RTMP_EnableWrite(rtmp_);
   }
-  
+
   if (!RTMP_Connect(rtmp_, NULL) || !RTMP_ConnectStream(rtmp_, 0)) {
     return NO;
   }
-  
-  headerSent_ = NO;
+  rtmpOpen_ = YES;
   return YES;
 }
 
 - (void)rtmpClose {
-  if (rtmp_) {
+  if (rtmpOpen_) {
     RTMP_Close(rtmp_);
-    rtmp_ = 0;
+    rtmpOpen_ = NO;
   }
 }
 
 - (NSUInteger)rtmpWrite:(NSData *)data {
-  
-  /*
-  int bufSize = [data length];
-  const char *buf = [data bytes];
-   */
-/*
-  if (buf[0] == 'F' && buf[1] == 'L' && buf[2] == 'V') {
-    NSLog(@"FLV HEADER\n%@", [[NSData dataWithBytes:buf length:13] hexString]);
-    buf += 13;
-    bufSize -= 13;
-  }
-*/
-  /*
-  while (bufSize > 0) {
-    if (buf[0] == 'F' && buf[1] == 'L' && buf[2] == 'V') {
-      NSLog(@"FLV HEADER\n%@", [[NSData dataWithBytes:buf length:13] hexString]);
-      if (!headerSent_) {
-        headerSent_ = YES;
-      } else {
-        NSLog(@"NO GOOD");
-      }
-      buf += 13;
-      bufSize -= 13;
-    }
-
-    char packetType = *buf++;
-    int bodySize = AMF_DecodeInt24(buf);
-    buf += 3;
-    int timeStamp = AMF_DecodeInt24(buf);
-    buf += 3;
-    timeStamp |= *buf++ << 24;
-    
-    NSLog(@"TagHeader\n%@", [[NSData dataWithBytes:buf - 8 length:11] hexString]);
-    bufSize -= 11;
-    NSLog(@"TagBody\n%@", [[NSData dataWithBytes:(buf) length:bodySize] hexString]);
-    bufSize -= bodySize;
-    buf += bodySize;
-    NSLog(@"TagTail\n%@", [[NSData dataWithBytes:(buf) length:4] hexString]);
-    bufSize -= 4;
-    buf += 4;
-  }
-  return 0;
-*/
-  // return RTMP_Write(rtmp_, buf, bufSize);
-   
   return RTMP_Write(rtmp_, [data bytes], [data length]);
 }
 
