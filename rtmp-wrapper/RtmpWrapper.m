@@ -59,6 +59,10 @@ static void rtmpLog(int level, const char *fmt, va_list args) {
   [super dealloc];
 }
 
+- (void)setLogInfo {
+  RTMP_LogSetLevel(RTMP_LOGINFO);
+}
+
 - (BOOL)rtmpOpenWithURL:(NSString *)url enableWrite:(BOOL)enableWrite {
   RTMP_LogSetLevel(RTMP_LOGALL);
   RTMP_LogCallback(rtmpLog);
