@@ -14,7 +14,5 @@ Pod::Spec.new do |s|
   s.public_header_files = 'rtmp-wrapper/RtmpWrapper.h' 
   s.source_files = 'rtmp-wrapper/{*}.{h,m}'
   
-  s.vendored_libraries = 'librtmp-iOS/lib/libcrypto.a', 'librtmp-iOS/lib/libssl.a', 'librtmp-iOS/lib/librtmp.a'
-    s.libraries = 'ssl', 'crypto', 'rtmp'
-    s.xcconfig = { 'HEADER_SEARCH_PATHS' => "${PODS_ROOT}/#{s.name}/librtmp-iOS/include/**" }
+  s.dependency = 'librtmp-iOS',   :git => 'git@github.com:ifactorylab/librtmp-iOS.git'
 end
