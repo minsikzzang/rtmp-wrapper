@@ -13,7 +13,9 @@
 
 @end
 
-NSString const* kRtmpEP = @"rtmp://media18.lsops.net/live/test";
+NSString const* kRtmpEP = @"rtmp://media20.lsops.net/live/test";
+NSString const* kSourceFLV = @"http://bcn01.livestation.com/test.flv";
+NSString const* kSourceMP4 = @"http://clips.vorwaerts-gmbh.de/big_buck_bunny.mp4";
 
 @implementation RtmpWrapperTests
 
@@ -43,14 +45,13 @@ NSString const* kRtmpEP = @"rtmp://media18.lsops.net/live/test";
   XCTAssertTrue(ret);
   if (ret) {    
     NSData *video =
-      [NSData dataWithContentsOfURL:
-        [NSURL URLWithString:@"http://bcn01.livestation.com/test.flv"]];
+      [NSData dataWithContentsOfURL:[NSURL URLWithString:(NSString *)kSourceFLV]];
+      // [NSData dataWithContentsOfURL:[NSURL URLWithString:(NSString *)kSourceMP4]];
     NSLog(@"original video length: %d", [video length]);
     NSUInteger videoLength = [video length];
     
-    /*
     NSUInteger length = [video length];
-    NSUInteger chunkSize = 100 * 1024;
+    NSUInteger chunkSize = 100 * 5120;
     NSUInteger offset = 0;
     do {
       NSUInteger thisChunkSize = length - offset > chunkSize ? chunkSize : length - offset;
@@ -61,9 +62,14 @@ NSString const* kRtmpEP = @"rtmp://media18.lsops.net/live/test";
       
       // Write new chunk to rtmp server
       NSLog(@"%d", [rtmp rtmpWrite:chunk]);
+      sleep(1);
     } while (offset < length);
-     */
-    XCTAssertEqual([rtmp rtmpWrite:video], videoLength);
+    
+    // XCTAssertEqual([rtmp rtmpWrite:video], videoLength);
+  }
+  
+  for (int ii = 0; ii < 100; ii++) {
+    sleep(1);
   }
   
   [rtmp rtmpClose];
