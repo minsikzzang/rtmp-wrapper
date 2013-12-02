@@ -30,4 +30,6 @@
 
 - (NSUInteger)rtmpWrite:(NSData *)data;
 
+- (void)setLogInfo;
+
 @end

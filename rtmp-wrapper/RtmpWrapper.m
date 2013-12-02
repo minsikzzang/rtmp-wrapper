@@ -7,12 +7,12 @@
 //
 
 #import "RtmpWrapper.h"
-
 #import <librtmp/rtmp.h>
 #import <librtmp/log.h>
 
 @interface RtmpWrapper () {
   RTMP *rtmp_;
+  BOOL rtmpOpen_;
 }
 
 @end
@@ -42,15 +42,23 @@ static void rtmpLog(int level, const char *fmt, va_list args) {
   if (self != nil) {
     // Allocate rtmp context object
     rtmp_ = RTMP_Alloc();
+    rtmpOpen_ = NO;
   }
   return self;
 }
 
 - (void)dealloc {
+  if (rtmpOpen_) {
+    [self rtmpClose];
+  }
   // Release rtmp context
   RTMP_Free(rtmp_);
   
   [super dealloc];
+}
+
+- (void)setLogInfo {
+  RTMP_LogSetLevel(RTMP_LOGINFO);
 }
 
 - (BOOL)rtmpOpenWithURL:(NSString *)url enableWrite:(BOOL)enableWrite {
@@ -66,23 +74,23 @@ static void rtmpLog(int level, const char *fmt, va_list args) {
   if (enableWrite) {
     RTMP_EnableWrite(rtmp_);
   }
-  
+
   if (!RTMP_Connect(rtmp_, NULL) || !RTMP_ConnectStream(rtmp_, 0)) {
     return NO;
   }
-  
+  rtmpOpen_ = YES;
   return YES;
 }
 
 - (void)rtmpClose {
-  if (rtmp_) {
+  if (rtmpOpen_) {
     RTMP_Close(rtmp_);
-    rtmp_ = 0;
+    rtmpOpen_ = NO;
   }
 }
 
 - (NSUInteger)rtmpWrite:(NSData *)data {
-  return RTMP_Write(rtmp_, [data bytes], [data length]);;
+  return RTMP_Write(rtmp_, [data bytes], [data length]);
 }
 
 @end

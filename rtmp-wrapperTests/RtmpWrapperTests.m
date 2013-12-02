@@ -64,12 +64,8 @@ NSString const* kSourceMP4 = @"http://clips.vorwaerts-gmbh.de/big_buck_bunny.mp4
       NSLog(@"%d", [rtmp rtmpWrite:chunk]);
       sleep(1);
     } while (offset < length);
-    
-    // XCTAssertEqual([rtmp rtmpWrite:video], videoLength);
-  }
-  
-  for (int ii = 0; ii < 100; ii++) {
-    sleep(1);
+ 
+    XCTAssertEqual([rtmp rtmpWrite:video], videoLength);
   }
   
   [rtmp rtmpClose];
