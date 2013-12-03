@@ -14,5 +14,5 @@ Pod::Spec.new do |s|
   s.public_header_files = 'rtmp-wrapper/RtmpWrapper.h' 
   s.source_files = 'rtmp-wrapper/{*}.{h,m}'
   
-  s.dependency = 'librtmp-iOS'
+  # s.dependency = 'librtmp-iOS'
 end
