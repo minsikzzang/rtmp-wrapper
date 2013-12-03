@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name     = 'rtmp-wrapper'
-  s.version  = '1.0.0'
+  s.version  = '1.0.1'
   s.license  = 'MIT'
   s.summary  = 'librtmp wrapper library for IOS'
   s.homepage = 'https://github.com/ifactorylab/rtmp-wrapper'
