@@ -5,7 +5,7 @@ Pod::Spec.new do |s|
   s.summary  = 'librtmp wrapper library for IOS'
   s.homepage = 'https://github.com/ifactorylab/rtmp-wrapper'
   s.authors  = { 'Min Kim' => 'minsikzzang@gmail.com' }
-  s.source   = { :git => 'https://github.com/ifactorylab/rtmp-wrapper.git', :tag => "1.0.0", :submodules => true }
+  s.source   = { :git => 'https://github.com/ifactorylab/rtmp-wrapper.git', :branch => "master", :submodules => true }
   s.requires_arc = false
   
   s.ios.deployment_target = '6.0'
