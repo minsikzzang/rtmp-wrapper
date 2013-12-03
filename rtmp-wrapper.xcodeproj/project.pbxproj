@@ -399,10 +399,7 @@
 					"$(inherited)",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
 				);
-				LIBRARY_SEARCH_PATHS = (
-					"$(inherited)",
-					"librtmp-iOS/lib",
-				);
+				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -421,10 +418,7 @@
 					"$(inherited)",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
 				);
-				LIBRARY_SEARCH_PATHS = (
-					"$(inherited)",
-					"librtmp-iOS/lib",
-				);
+				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -450,13 +444,10 @@
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
-					"librtmp-iOS/include",
 				);
 				INFOPLIST_FILE = "rtmp-wrapperTests/rtmp-wrapperTests-Info.plist";
 				LIBRARY_SEARCH_PATHS = (
-					"$(inherited)",
-					"librtmp-iOS/lib",
-					"/livestation/benchmarks/rtmp-wrapper/librtmp-iOS/lib",
+					"$(inherited)",					
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				VALID_ARCHS = i386;
@@ -484,8 +475,6 @@
 				INFOPLIST_FILE = "rtmp-wrapperTests/rtmp-wrapperTests-Info.plist";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					"librtmp-iOS/lib",
-					"/livestation/benchmarks/rtmp-wrapper/librtmp-iOS/lib",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				VALID_ARCHS = i386;

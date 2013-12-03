@@ -1,3 +1,0 @@
-[submodule "librtmp-iOS"]
-	path = librtmp-iOS
-	url = git@github.com:ifactorylab/librtmp-iOS.git

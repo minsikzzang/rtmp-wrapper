@@ -34,7 +34,7 @@ static void rtmpLog(int level, const char *fmt, va_list args) {
   av_vlog(NULL, level, fmt, args);
   av_log(NULL, level, "\n");
    */
-  NSLog(fmt, args);
+  NSLog([NSString stringWithUTF8String:fmt], args);
 }
 
 - (id)init {
