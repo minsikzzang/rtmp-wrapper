@@ -16,5 +16,5 @@ Pod::Spec.new do |s|
   s.public_header_files = 'rtmp-wrapper/RtmpWrapper.h' 
   s.source_files = 'rtmp-wrapper/{*}.{h,m}'    
   s.xcconfig = { 'HEADER_SEARCH_PATHS' => "${PODS_ROOT}/librtmp-iOS/include/**", "LIBRARY_SEARCH_PATHS" => "${PODS_ROOT}/librtmp-iOS/lib/**" }
-  s.libraries = 'ssl', 'crypto', 'rtmp', 'z'
+  s.libraries = 'ssl', 'crypto', 'rtmp'
 end
