@@ -27,6 +27,13 @@ $ pods install
 $ open rtmp-wrapper.xcworkspace
 ```
 
+### Add rtmp-wrapper to your project
+
+Create a Podfile if not exist, add the line below
+```
+pod 'rtmp-wrapper',   '~> 1.0.3'
+```
+
 ### Publishing RTMP stream
 
 ```
