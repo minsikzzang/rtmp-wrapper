@@ -447,7 +447,8 @@
 				);
 				INFOPLIST_FILE = "rtmp-wrapperTests/rtmp-wrapperTests-Info.plist";
 				LIBRARY_SEARCH_PATHS = (
-					"$(inherited)",					
+					"$(inherited)",
+					"Pods/librtmp-iOS/lib/**",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				VALID_ARCHS = i386;
@@ -475,6 +476,7 @@
 				INFOPLIST_FILE = "rtmp-wrapperTests/rtmp-wrapperTests-Info.plist";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
+					"Pods/librtmp-iOS/lib/**",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				VALID_ARCHS = i386;
