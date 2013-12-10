@@ -13,7 +13,7 @@
 
 @end
 
-NSString const* kRtmpEP = @"rtmp://media20.lsops.net/live/test";
+NSString const* kRtmpEP = @"{put your rtmp publishing entry point}";
 NSString const* kSourceFLV = @"http://bcn01.livestation.com/test.flv";
 NSString const* kSourceMP4 = @"http://clips.vorwaerts-gmbh.de/big_buck_bunny.mp4";
 
