@@ -31,7 +31,7 @@ $ open rtmp-wrapper.xcworkspace
 
 Create a Podfile if not exist, add the line below
 ```
-pod 'rtmp-wrapper',   '~> 1.0.3'
+pod 'rtmp-wrapper',   '~> 1.0.4'
 ```
 
 ### Publishing RTMP stream
@@ -67,3 +67,8 @@ if (ret) {
 [rtmp rtmpClose];
 [rtmp release];
 ```
+
+## Version detail
+
+### 1.0.4
+- added connected and autoReconnect

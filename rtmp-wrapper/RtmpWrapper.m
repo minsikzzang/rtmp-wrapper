@@ -12,12 +12,15 @@
 
 @interface RtmpWrapper () {
   RTMP *rtmp_;
-  BOOL rtmpOpen_;
+  BOOL connected_;
 }
 
 @end
 
 @implementation RtmpWrapper
+
+@synthesize connected = connected_;
+@synthesize autoReconnect;
 
 static void rtmpLog(int level, const char *fmt, va_list args) {
   /*
@@ -42,13 +45,15 @@ static void rtmpLog(int level, const char *fmt, va_list args) {
   if (self != nil) {
     // Allocate rtmp context object
     rtmp_ = RTMP_Alloc();
-    rtmpOpen_ = NO;
+    connected_ = NO;
+    autoReconnect = NO;
+    RTMP_LogSetLevel(RTMP_LOGALL);
   }
   return self;
 }
 
 - (void)dealloc {
-  if (rtmpOpen_) {
+  if (self.connected) {
     [self rtmpClose];
   }
   // Release rtmp context
@@ -61,10 +66,15 @@ static void rtmpLog(int level, const char *fmt, va_list args) {
   RTMP_LogSetLevel(RTMP_LOGINFO);
 }
 
+- (BOOL)isConnected {
+  if (rtmp_) {
+    connected_ = RTMP_IsConnected(rtmp_);
+  }
+  return connected_;
+}
+
 - (BOOL)rtmpOpenWithURL:(NSString *)url enableWrite:(BOOL)enableWrite {
-  RTMP_LogSetLevel(RTMP_LOGALL);
   RTMP_LogCallback(rtmpLog);
-  
   RTMP_Init(rtmp_);
   if (!RTMP_SetupURL(rtmp_,
                      (char *)[url cStringUsingEncoding:NSASCIIStringEncoding])) {
@@ -78,19 +88,31 @@ static void rtmpLog(int level, const char *fmt, va_list args) {
   if (!RTMP_Connect(rtmp_, NULL) || !RTMP_ConnectStream(rtmp_, 0)) {
     return NO;
   }
-  rtmpOpen_ = YES;
+  connected_ = RTMP_IsConnected(rtmp_);
   return YES;
 }
 
 - (void)rtmpClose {
-  if (rtmpOpen_) {
+  if (self.connected) {
     RTMP_Close(rtmp_);
-    rtmpOpen_ = NO;
   }
 }
 
 - (NSUInteger)rtmpWrite:(NSData *)data {
-  return RTMP_Write(rtmp_, [data bytes], [data length]);
+  int sent = RTMP_Write(rtmp_, [data bytes], [data length]);
+  if (sent <= 0) {
+    // If the RTMP_Write fails, check if the connection is still established.
+    if (!self.connected && self.autoReconnect) {
+      // If the connection has dropped and autoReconnect set to true, try to
+      // reconnect current rtmp to the server
+      if (!RTMP_Connect(rtmp_, NULL) || !RTMP_ConnectStream(rtmp_, 0)) {
+        // Failed to reconnect..
+      } else {
+        sent = RTMP_Write(rtmp_, [data bytes], [data length]);
+      }
+    }
+  }
+  return sent;
 }
 
 @end

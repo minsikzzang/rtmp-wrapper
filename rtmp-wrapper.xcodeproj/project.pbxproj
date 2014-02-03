@@ -65,6 +65,7 @@
 		A43FA6AD17FB178200CBD72F /* libcrypto.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libcrypto.a; path = "librtmp-iOS/lib/libcrypto.a"; sourceTree = "<group>"; };
 		A43FA6AE17FB178200CBD72F /* librtmp.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = librtmp.a; path = "librtmp-iOS/lib/librtmp.a"; sourceTree = "<group>"; };
 		A43FA6AF17FB178200CBD72F /* libssl.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libssl.a; path = "librtmp-iOS/lib/libssl.a"; sourceTree = "<group>"; };
+		A4AB252A189FFD050055A8B2 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = README.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -98,6 +99,7 @@
 		937D48E517FA2B4000E59556 = {
 			isa = PBXGroup;
 			children = (
+				A4AB252A189FFD050055A8B2 /* README.md */,
 				A42812FC184D033300B2A1CB /* rtmp-wrapper.podspec */,
 				937D48F317FA2B4000E59556 /* rtmp-wrapper */,
 				937D490717FA2B4000E59556 /* rtmp-wrapperTests */,
