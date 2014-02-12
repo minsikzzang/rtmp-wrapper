@@ -1,0 +1,3 @@
+PODS_LIBRTMP_IOS_HEADER_SEARCH_PATHS = ${PODS_ROOT}/librtmp-iOS/include/**
+PODS_LIBRTMP_IOS_LIBRARY_SEARCH_PATHS = ${PODS_ROOT}/librtmp-iOS/lib/** "$(PODS_ROOT)/librtmp-iOS/lib" "$(PODS_ROOT)/librtmp-iOS/lib" "$(PODS_ROOT)/librtmp-iOS/lib"
+PODS_LIBRTMP_IOS_OTHER_LDFLAGS = -lcrypto -lrtmp -lssl

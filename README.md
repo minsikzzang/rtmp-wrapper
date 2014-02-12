@@ -70,5 +70,9 @@ if (ret) {
 
 ## Version detail
 
+### 1.0.5
+- sigpipe => ignored
+- reconnect function added
+
 ### 1.0.4
 - added connected and autoReconnect

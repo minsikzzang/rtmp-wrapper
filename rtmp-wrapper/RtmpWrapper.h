@@ -32,6 +32,8 @@
 
 - (void)setLogInfo;
 
+- (BOOL)reconnect;
+
 @property (nonatomic, assign, getter = isConnected) BOOL connected;
 @property (atomic, assign) BOOL autoReconnect;
 

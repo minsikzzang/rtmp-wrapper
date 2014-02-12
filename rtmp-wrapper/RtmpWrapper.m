@@ -48,6 +48,7 @@ static void rtmpLog(int level, const char *fmt, va_list args) {
     connected_ = NO;
     autoReconnect = NO;
     RTMP_LogSetLevel(RTMP_LOGALL);
+    signal(SIGPIPE, SIG_IGN);
   }
   return self;
 }
@@ -96,6 +97,10 @@ static void rtmpLog(int level, const char *fmt, va_list args) {
   if (self.connected) {
     RTMP_Close(rtmp_);
   }
+}
+
+- (BOOL)reconnect {
+  return (RTMP_Connect(rtmp_, NULL) && RTMP_ConnectStream(rtmp_, 0));
 }
 
 - (NSUInteger)rtmpWrite:(NSData *)data {
