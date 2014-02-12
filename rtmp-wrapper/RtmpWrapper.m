@@ -94,7 +94,7 @@ static void rtmpLog(int level, const char *fmt, va_list args) {
 }
 
 - (void)rtmpClose {
-  if (self.connected) {
+  if (rtmp_) {
     RTMP_Close(rtmp_);
   }
 }
@@ -110,7 +110,8 @@ static void rtmpLog(int level, const char *fmt, va_list args) {
     if (!self.connected && self.autoReconnect) {
       // If the connection has dropped and autoReconnect set to true, try to
       // reconnect current rtmp to the server
-      if (!RTMP_Connect(rtmp_, NULL) || !RTMP_ConnectStream(rtmp_, 0)) {
+      [self rtmpClose];
+      if (![self reconnect]) {
         // Failed to reconnect..
       } else {
         sent = RTMP_Write(rtmp_, [data bytes], [data length]);
