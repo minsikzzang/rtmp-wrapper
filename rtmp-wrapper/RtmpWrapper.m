@@ -100,6 +100,11 @@ static void rtmpLog(int level, const char *fmt, va_list args) {
 }
 
 - (BOOL)reconnect {
+  if (!RTMP_IsConnected(rtmp_)) {
+    if (!RTMP_Connect(rtmp_, NULL)) {
+      return NO;
+    }
+  }
   return RTMP_ReconnectStream(rtmp_, 0);
 }
 
