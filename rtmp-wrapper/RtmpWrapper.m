@@ -100,7 +100,7 @@ static void rtmpLog(int level, const char *fmt, va_list args) {
 }
 
 - (BOOL)reconnect {
-  return (RTMP_Connect(rtmp_, NULL) && RTMP_ConnectStream(rtmp_, 0));
+  return RTMP_ReconnectStream(rtmp_, 0);
 }
 
 - (NSUInteger)rtmpWrite:(NSData *)data {
@@ -110,7 +110,7 @@ static void rtmpLog(int level, const char *fmt, va_list args) {
     if (!self.connected && self.autoReconnect) {
       // If the connection has dropped and autoReconnect set to true, try to
       // reconnect current rtmp to the server
-      [self rtmpClose];
+      // [self rtmpClose];
       if (![self reconnect]) {
         // Failed to reconnect..
       } else {
