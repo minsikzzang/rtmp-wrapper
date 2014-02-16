@@ -8,6 +8,12 @@
 
 #import <Foundation/Foundation.h>
 
+typedef void (^WriteCompleteHandler)(NSError *error);
+
+typedef enum RTMPErrorCode {
+  RTMPErrorBufferFull = 0
+} RTMPErrorCode;
+
 @interface RtmpWrapper : NSObject
 
 /**
@@ -30,11 +36,28 @@
 
 - (NSUInteger)rtmpWrite:(NSData *)data;
 
++ (NSError *)errorRTMPFailedWithReason:(NSString *)errorReason
+                               andCode:(RTMPErrorCode)errorCode;
+
+/**
+ @abstract
+  Asynchronous rtmp write function
+ 
+ @param data
+ @param completion
+ */
+- (void)rtmpWrite:(NSData *)data
+   withCompletion:(WriteCompleteHandler)completion;
+
+- (void)appendData:(NSData *)data
+    withCompletion:(WriteCompleteHandler)completion;
+
 - (void)setLogInfo;
 
 - (BOOL)reconnect;
 
 @property (nonatomic, assign, getter = isConnected) BOOL connected;
-@property (atomic, assign) BOOL autoReconnect;
+@property (nonatomic, assign) BOOL autoReconnect;
+@property (nonatomic, assign) NSUInteger maxBufferSizeInKbyte;
 
 @end

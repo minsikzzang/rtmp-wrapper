@@ -159,7 +159,16 @@ NSString const* kSourceMP4 = @"http://clips.vorwaerts-gmbh.de/big_buck_bunny.mp4
   }
   
   [rtmp release];
+}
 
+- (void)testAppendData {
+  RtmpWrapper *rtmp = [[RtmpWrapper alloc] init];
+  [rtmp setLogInfo];
+  
+  NSData *data = [[NSData alloc] init];
+  [data appendData:@"xxxxxxxxxx"];
+//  [rtmp appendData:data withCompletion]
+  [rtmp release];
 }
 
 @end
