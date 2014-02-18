@@ -1,10 +1,13 @@
 PODS:
+  - IFTimeoutBlock (1.0.0)
   - librtmp-iOS (1.0.1)
 
 DEPENDENCIES:
+  - IFTimeoutBlock (~> 1.0.0)
   - librtmp-iOS (~> 1.0.1)
 
 SPEC CHECKSUMS:
+  IFTimeoutBlock: a4f422ec5488e324b4f5618ce1a32db66175bc02
   librtmp-iOS: 494e64695a9392974dd4d342550884eeda1e78c8
 
 COCOAPODS: 0.28.0

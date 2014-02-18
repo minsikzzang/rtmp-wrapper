@@ -12,6 +12,7 @@ Pod::Spec.new do |s|
   s.osx.deployment_target = '10.8'
 
   s.dependency 'librtmp-iOS', '~> 1.0.1'
+  s.dependency 'IFTimeoutBlock', '~> 1.0.0'
 
   s.public_header_files = 'rtmp-wrapper/RtmpWrapper.h' 
   s.source_files = 'rtmp-wrapper/{*}.{h,m}'    

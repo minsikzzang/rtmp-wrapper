@@ -182,7 +182,7 @@ void rtmpLog(int level, const char *fmt, va_list args) {
   bufferSize += data.length;
 
   @synchronized (self) {
-    NSLog(@"item to write added (%u)", data.length);
+    // NSLog(@"item to write added (%u)", data.length);
     [self.flvBuffer addObject:b];
   }
   [b release];
@@ -201,14 +201,14 @@ void rtmpLog(int level, const char *fmt, va_list args) {
     WriteCompleteHandler handler = [item objectForKey:@"completion"];
     
     IFTimeoutBlock *block = [[IFTimeoutBlock alloc] init];
-    IFTimeoutHandler timeoutBlock =^ {
+    IFTimeoutHandler timeoutBlock = ^(IFTimeoutBlock *block) {
       NSError *error =
       [RtmpWrapper errorRTMPFailedWithReason:@"Timed out for writing"
                                      andCode:RTMPErrorWriteTimeout];
       handler(-1, error);
     };
     
-    IFExecutionBlock execution = ^{
+    IFExecutionBlock execution = ^(IFTimeoutBlock *block) {
       NSError *error = nil;
       NSUInteger sent = -1;
       @synchronized (self) {
@@ -255,7 +255,7 @@ void rtmpLog(int level, const char *fmt, va_list args) {
             enableWrite:(BOOL)enableWrite
          withCompletion:(OpenCompleteHandler)handler {
   IFTimeoutBlock *block = [[IFTimeoutBlock alloc] init];
-  IFTimeoutHandler timeoutBlock =^ {
+  IFTimeoutHandler timeoutBlock = ^(IFTimeoutBlock *block) {
     NSError *error =
     [RtmpWrapper errorRTMPFailedWithReason:
      [NSString stringWithFormat:@"Timed out for openning %@", url]
@@ -263,7 +263,7 @@ void rtmpLog(int level, const char *fmt, va_list args) {
     handler(error);
   };
   
-  IFExecutionBlock execution = ^{
+  IFExecutionBlock execution = ^(IFTimeoutBlock *block) {
     NSError *error = nil;
     if (![self rtmpOpenWithURL:url enableWrite:enableWrite]) {
       error =
@@ -276,14 +276,12 @@ void rtmpLog(int level, const char *fmt, va_list args) {
     if (!block.timedOut) {
       handler(error);
     }
-    // [self.usedBlocks addObject:block];
-      };
+  };
   
   [block setExecuteAsyncWithTimeout:3
                         WithHandler:timeoutBlock
                   andExecutionBlock:execution];
   [block release];
-
 }
 
 - (void)rtmpWrite:(NSData *)data
