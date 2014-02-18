@@ -212,7 +212,7 @@ void rtmpLog(int level, const char *fmt, va_list args) {
       if (!block.timedOut) {
         handler(sent, error);
         if (error == nil) {
-          [self.flvBuffer removeObjectAtIndex:0];
+          [self.flvBuffer removeObject:item];
           bufferSize -= length;
           if (self.flvBuffer.count > 0) {
             [self write];
@@ -225,7 +225,7 @@ void rtmpLog(int level, const char *fmt, va_list args) {
       }
     };
     
-    NSLog(@"execute write call in async (%u)", length);
+    // NSLog(@"execute write call in async (%u)", length);
     [block setExecuteAsyncWithTimeout:5
                           WithHandler:timeoutBlock
                     andExecutionBlock:execution];

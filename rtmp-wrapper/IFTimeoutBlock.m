@@ -41,9 +41,11 @@
 - (void)dealloc {
   if (executionBlock) {
     [executionBlock release];
+    executionBlock = nil;
   }
   if (timeoutBlock) {
     [timeoutBlock release];
+    timeoutBlock = nil;
   }
   [super dealloc];
 }
@@ -86,12 +88,17 @@
   dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT,(unsigned long)NULL), ^(void) {
     [self waitWithTimeout:timeout periodicHandler:^(IFTimeoutBlock *block) {
       timedOut = YES;
-      self.timeoutBlock();
+      if (self.timeoutBlock) {
+        self.timeoutBlock();  
+      }
+      
     }];
   });
   
   dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT,(unsigned long)NULL), ^(void) {
-    self.executionBlock();
+    if (self.executionBlock) {
+      self.executionBlock();
+    }
   });
 }
 
