@@ -155,7 +155,7 @@ void rtmpLog(int level, const char *fmt, va_list args) {
                                               "either frequent send failing or"
                                               "some reason."
                                      andCode:RTMPErrorBufferFull];
-    handler(error);
+    handler(-1, error);
     [self.flvBuffer removeObjectAtIndex:0];
   }
 }
@@ -193,13 +193,15 @@ void rtmpLog(int level, const char *fmt, va_list args) {
       NSError *error =
       [RtmpWrapper errorRTMPFailedWithReason:@"Timed out for writing"
                                      andCode:RTMPErrorWriteTimeout];
-      handler(error);
+      handler(-1, error);
     };
     
     IFExecutionBlock execution = ^{
       NSError *error = nil;
+      NSUInteger sent = -1;
       @synchronized (self) {
-        if ([self rtmpWrite:data] != length) {
+        sent = [self rtmpWrite:data];
+        if (sent != length) {
           error =
             [RtmpWrapper errorRTMPFailedWithReason:[NSString stringWithFormat:@"Failed to write data"]
                                            andCode:RTMPErrorWriteFail];
@@ -208,7 +210,7 @@ void rtmpLog(int level, const char *fmt, va_list args) {
       
       [block signal];
       if (!block.timedOut) {
-        handler(error);
+        handler(sent, error);
         if (error == nil) {
           [self.flvBuffer removeObjectAtIndex:0];
           bufferSize -= length;

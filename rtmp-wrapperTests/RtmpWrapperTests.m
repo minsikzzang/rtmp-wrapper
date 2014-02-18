@@ -220,7 +220,7 @@ NSString const* kSourceMP4 = @"http://clips.vorwaerts-gmbh.de/big_buck_bunny.mp4
                                  freeWhenDone:NO];
   
   [rtmp rtmpOpenWithURL:kRtmpEP enableWrite:YES];
-  [rtmp rtmpWrite:chunk withCompletion:^(NSError *error) {
+  [rtmp rtmpWrite:chunk withCompletion:^(NSUInteger sent, NSError *error) {
     // Signal that block has completed
     XCTAssertNil(error);
     dispatch_semaphore_signal(semaphore);
@@ -254,7 +254,7 @@ NSString const* kSourceMP4 = @"http://clips.vorwaerts-gmbh.de/big_buck_bunny.mp4
     NSUInteger chunkSize = 100 * 5120;
     NSUInteger offset = 0;
     int i = 0;
-    __block int sent = 0;
+    __block int done = 0;
     
     do {
       NSUInteger thisChunkSize = length - offset > chunkSize ? chunkSize : length - offset;
@@ -263,9 +263,9 @@ NSString const* kSourceMP4 = @"http://clips.vorwaerts-gmbh.de/big_buck_bunny.mp4
                                      freeWhenDone:NO];
       offset += thisChunkSize;
       
-      [rtmp rtmpWrite:chunk withCompletion:^(NSError *error) {
+      [rtmp rtmpWrite:chunk withCompletion:^(NSUInteger sent, NSError *error) {
         // Signal that block has completed
-        sent++;
+        done++;
       }];
       
       if (i++ > 10) {
@@ -273,7 +273,7 @@ NSString const* kSourceMP4 = @"http://clips.vorwaerts-gmbh.de/big_buck_bunny.mp4
       }
     } while (offset < length);
     
-    while (i != sent) {
+    while (i != done) {
       sleep(1);
     }
     
@@ -309,7 +309,7 @@ NSString const* kSourceMP4 = @"http://clips.vorwaerts-gmbh.de/big_buck_bunny.mp4
     NSUInteger chunkSize = 1024 * 5;
     NSUInteger offset = 0;
     int i = 0;
-    __block int sent = 0;
+    __block int done = 0;
     
     do {
       NSUInteger thisChunkSize = length - offset > chunkSize ? chunkSize : length - offset;
@@ -317,9 +317,9 @@ NSString const* kSourceMP4 = @"http://clips.vorwaerts-gmbh.de/big_buck_bunny.mp4
                                            length:thisChunkSize
                                      freeWhenDone:NO];
       offset += thisChunkSize;
-      [rtmp appendData:chunk withCompletion:^(NSError *error) {
+      [rtmp appendData:chunk withCompletion:^(NSUInteger sent, NSError *error) {
         // Signal that block has completed
-        sent++;
+        done++;
       }];
       
       if (i++ > 10) {
@@ -327,11 +327,11 @@ NSString const* kSourceMP4 = @"http://clips.vorwaerts-gmbh.de/big_buck_bunny.mp4
       }
     } while (offset < length);
     
-    [rtmp rtmpWrite:nil withCompletion:^(NSError *error) {
+    [rtmp rtmpWrite:nil withCompletion:^(NSUInteger sent, NSError *error) {
       
     }];
 
-    while (i != sent) {
+    while (i != done) {
       sleep(1);
     }
     

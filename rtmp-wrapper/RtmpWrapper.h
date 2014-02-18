@@ -8,7 +8,7 @@
 
 #import <Foundation/Foundation.h>
 
-typedef void (^WriteCompleteHandler)(NSError *error);
+typedef void (^WriteCompleteHandler)(NSUInteger sent, NSError *error);
 typedef void (^OpenCompleteHandler)(NSError *error);
 
 typedef enum RTMPErrorCode {
