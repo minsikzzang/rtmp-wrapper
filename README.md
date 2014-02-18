@@ -31,7 +31,7 @@ $ open rtmp-wrapper.xcworkspace
 
 Create a Podfile if not exist, add the line below
 ```
-pod 'rtmp-wrapper',   '~> 1.0.4'
+pod 'rtmp-wrapper',   '~> 1.0.6'
 ```
 
 ### Publishing RTMP stream
@@ -69,6 +69,10 @@ if (ret) {
 ```
 
 ## Version detail
+
+### 1.0.6
+- async open / write added
+- autoreconnect removed
 
 ### 1.0.5
 - sigpipe => ignored

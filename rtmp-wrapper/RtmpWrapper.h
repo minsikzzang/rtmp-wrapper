@@ -9,9 +9,14 @@
 #import <Foundation/Foundation.h>
 
 typedef void (^WriteCompleteHandler)(NSError *error);
+typedef void (^OpenCompleteHandler)(NSError *error);
 
 typedef enum RTMPErrorCode {
-  RTMPErrorBufferFull = 0
+  RTMPErrorBufferFull = 0,
+  RTMPErrorURLOpenFail,
+  RTMPErrorOpenTimeout,
+  RTMPErrorWriteFail,
+  RTMPErrorWriteTimeout
 } RTMPErrorCode;
 
 @interface RtmpWrapper : NSObject
@@ -39,6 +44,9 @@ typedef enum RTMPErrorCode {
 + (NSError *)errorRTMPFailedWithReason:(NSString *)errorReason
                                andCode:(RTMPErrorCode)errorCode;
 
+- (void)rtmpOpenWithURL:(NSString *)url
+            enableWrite:(BOOL)enableWrite
+         withCompletion:(OpenCompleteHandler)handler;
 /**
  @abstract
   Asynchronous rtmp write function
@@ -57,7 +65,6 @@ typedef enum RTMPErrorCode {
 - (BOOL)reconnect;
 
 @property (nonatomic, assign, getter = isConnected) BOOL connected;
-@property (nonatomic, assign) BOOL autoReconnect;
 @property (nonatomic, assign) NSUInteger maxBufferSizeInKbyte;
 
 @end
