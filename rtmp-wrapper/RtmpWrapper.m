@@ -20,6 +20,7 @@ NSString *const kErrorDomain = @"com.ifactory.lab.rtmp.wrapper";
   BOOL connected_;
   BOOL writeQueueInUse_;
   NSMutableArray *flvBuffer_;
+  // NSMutableArray *usedBlocks_;
 }
 
 @property (nonatomic, retain) NSString *rtmpUrl;
@@ -27,6 +28,9 @@ NSString *const kErrorDomain = @"com.ifactory.lab.rtmp.wrapper";
 @property (nonatomic, retain) NSMutableArray *flvBuffer;
 @property (nonatomic, assign) NSInteger bufferSize;
 @property (nonatomic, assign) BOOL writeQueueInUse;
+// @property (nonatomic, retain) NSMutableArray *usedBlocks;
+
+// - (void)disposeUsedBlocks;
 
 @end
 
@@ -72,6 +76,7 @@ void rtmpLog(int level, const char *fmt, va_list args) {
   if (self != nil) {
     connected_ = NO;
     flvBuffer_ = [[NSMutableArray alloc] init];
+    // usedBlocks_ = [[NSMutableArray alloc] init];
     maxBufferSizeInKbyte = kMaxBufferSizeInKbyte;
     bufferSize = 0;
     writeQueueInUse_ = NO;
@@ -96,6 +101,13 @@ void rtmpLog(int level, const char *fmt, va_list args) {
   if (flvBuffer_) {
     [flvBuffer_ release];
   }
+  /*
+  [self disposeUsedBlocks];
+  
+  if (usedBlocks_) {
+    [usedBlocks_ release];
+  }
+   */
   // Release rtmp context
   RTMP_Free(rtmp_);
   
@@ -188,7 +200,7 @@ void rtmpLog(int level, const char *fmt, va_list args) {
     int length = [[item objectForKey:@"length"] integerValue];
     WriteCompleteHandler handler = [item objectForKey:@"completion"];
     
-    IFTimeoutBlock *block = [[[IFTimeoutBlock alloc] init] autorelease];
+    IFTimeoutBlock *block = [[IFTimeoutBlock alloc] init];
     IFTimeoutHandler timeoutBlock =^ {
       NSError *error =
       [RtmpWrapper errorRTMPFailedWithReason:@"Timed out for writing"
@@ -223,12 +235,16 @@ void rtmpLog(int level, const char *fmt, va_list args) {
         // If call fails or timed out, don't remove item and try again.
         // Let user decide whether reconnect or send it.
       }
+      
+      // [self.usedBlocks addObject:block];
+
     };
     
     // NSLog(@"execute write call in async (%u)", length);
     [block setExecuteAsyncWithTimeout:5
                           WithHandler:timeoutBlock
                     andExecutionBlock:execution];
+    [block release];
   }
 }
 
@@ -238,7 +254,7 @@ void rtmpLog(int level, const char *fmt, va_list args) {
 - (void)rtmpOpenWithURL:(NSString *)url
             enableWrite:(BOOL)enableWrite
          withCompletion:(OpenCompleteHandler)handler {
-  IFTimeoutBlock *block = [[[IFTimeoutBlock alloc] init] autorelease];
+  IFTimeoutBlock *block = [[IFTimeoutBlock alloc] init];
   IFTimeoutHandler timeoutBlock =^ {
     NSError *error =
     [RtmpWrapper errorRTMPFailedWithReason:
@@ -260,11 +276,14 @@ void rtmpLog(int level, const char *fmt, va_list args) {
     if (!block.timedOut) {
       handler(error);
     }
-  };
+    // [self.usedBlocks addObject:block];
+      };
   
   [block setExecuteAsyncWithTimeout:3
                         WithHandler:timeoutBlock
                   andExecutionBlock:execution];
+  [block release];
+
 }
 
 - (void)rtmpWrite:(NSData *)data
@@ -278,7 +297,20 @@ void rtmpLog(int level, const char *fmt, va_list args) {
     [self resizeBuffer:data];
     [self write];
   }
+  
+  // [self disposeUsedBlocks];
 }
+/*
+- (void)disposeUsedBlocks {
+  @synchronized (usedBlocks_) {
+    for (IFTimeoutBlock *block in usedBlocks_) {
+      [block release];
+    }
+    
+    [usedBlocks_ removeAllObjects];
+  }
+}
+*/
 
 #pragma mark -
 #pragma mark Sync class Methods
@@ -340,6 +372,13 @@ void rtmpLog(int level, const char *fmt, va_list args) {
   }
 }
 
+/*
+- (NSMutableArray *)usedBlocks {
+  @synchronized (usedBlocks_) {
+    return usedBlocks_;
+  }
+}
+*/
 
 @end
 

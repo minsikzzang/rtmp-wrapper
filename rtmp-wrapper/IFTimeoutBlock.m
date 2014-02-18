@@ -49,6 +49,7 @@
   }
   [super dealloc];
 }
+
 - (void)waitWithTimeout:(NSUInteger)timeout
         periodicHandler:(IFTimeoutPeriodicHandler)handler {
   NSDate *start = [NSDate date];
@@ -79,25 +80,50 @@
   signalsRemaining_ = expectedSignalCount_;
 }
 
+static dispatch_queue_t timeout_block_queue() {
+  static dispatch_queue_t if_timeout_block_queue;
+  static dispatch_once_t onceToken;
+  dispatch_once(&onceToken, ^{
+    if_timeout_block_queue = dispatch_queue_create("com.ifactory.lab.timeout.block", DISPATCH_QUEUE_CONCURRENT);
+  });
+  
+  return if_timeout_block_queue;
+}
+
+static dispatch_queue_t execution_block_queue() {
+  static dispatch_queue_t if_execution_block_queue;
+  static dispatch_once_t onceToken;
+  dispatch_once(&onceToken, ^{
+    if_execution_block_queue = dispatch_queue_create("com.ifactory.lab.execution.block", DISPATCH_QUEUE_CONCURRENT);
+  });
+  
+  return if_execution_block_queue;
+}
+
+
 - (void)setExecuteAsyncWithTimeout:(int)timeout
                        WithHandler:(IFTimeoutHandler)handler
                  andExecutionBlock:(IFExecutionBlock)execution {
   self.executionBlock = execution;
   self.timeoutBlock = handler;
   
-  dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT,(unsigned long)NULL), ^(void) {
+  dispatch_async(timeout_block_queue(), ^{
     [self waitWithTimeout:timeout periodicHandler:^(IFTimeoutBlock *block) {
       timedOut = YES;
       if (self.timeoutBlock) {
-        self.timeoutBlock();  
+        self.timeoutBlock();
+        [timeoutBlock release];
+        timeoutBlock = nil;
       }
       
     }];
   });
   
-  dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT,(unsigned long)NULL), ^(void) {
+  dispatch_async(execution_block_queue(), ^{
     if (self.executionBlock) {
       self.executionBlock();
+      [executionBlock release];
+      executionBlock = nil;
     }
   });
 }
