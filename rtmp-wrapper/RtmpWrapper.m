@@ -20,7 +20,6 @@ NSString *const kErrorDomain = @"com.ifactory.lab.rtmp.wrapper";
   BOOL connected_;
   BOOL writeQueueInUse_;
   NSMutableArray *flvBuffer_;
-  // NSMutableArray *usedBlocks_;
 }
 
 @property (nonatomic, retain) NSString *rtmpUrl;
@@ -28,9 +27,6 @@ NSString *const kErrorDomain = @"com.ifactory.lab.rtmp.wrapper";
 @property (nonatomic, retain) NSMutableArray *flvBuffer;
 @property (nonatomic, assign) NSInteger bufferSize;
 @property (nonatomic, assign) BOOL writeQueueInUse;
-// @property (nonatomic, retain) NSMutableArray *usedBlocks;
-
-// - (void)disposeUsedBlocks;
 
 @end
 
@@ -76,7 +72,6 @@ void rtmpLog(int level, const char *fmt, va_list args) {
   if (self != nil) {
     connected_ = NO;
     flvBuffer_ = [[NSMutableArray alloc] init];
-    // usedBlocks_ = [[NSMutableArray alloc] init];
     maxBufferSizeInKbyte = kMaxBufferSizeInKbyte;
     bufferSize = 0;
     writeQueueInUse_ = NO;
@@ -203,8 +198,8 @@ void rtmpLog(int level, const char *fmt, va_list args) {
     IFTimeoutBlock *block = [[IFTimeoutBlock alloc] init];
     IFTimeoutHandler timeoutBlock = ^(IFTimeoutBlock *block) {
       NSError *error =
-      [RtmpWrapper errorRTMPFailedWithReason:@"Timed out for writing"
-                                     andCode:RTMPErrorWriteTimeout];
+        [RtmpWrapper errorRTMPFailedWithReason:@"Timed out for writing"
+                                       andCode:RTMPErrorWriteTimeout];
       handler(-1, error);
     };
     
@@ -231,13 +226,12 @@ void rtmpLog(int level, const char *fmt, va_list args) {
           } else {
             self.writeQueueInUse = NO;
           }
+        } else {
+          // If call fails or timed out, don't remove item and try again.
+          // Let user decide whether reconnect or send it.
+          self.writeQueueInUse = NO;
         }
-        // If call fails or timed out, don't remove item and try again.
-        // Let user decide whether reconnect or send it.
       }
-      
-      // [self.usedBlocks addObject:block];
-
     };
     
     // NSLog(@"execute write call in async (%u)", length);
@@ -295,20 +289,7 @@ void rtmpLog(int level, const char *fmt, va_list args) {
     [self resizeBuffer:data];
     [self write];
   }
-  
-  // [self disposeUsedBlocks];
 }
-/*
-- (void)disposeUsedBlocks {
-  @synchronized (usedBlocks_) {
-    for (IFTimeoutBlock *block in usedBlocks_) {
-      [block release];
-    }
-    
-    [usedBlocks_ removeAllObjects];
-  }
-}
-*/
 
 #pragma mark -
 #pragma mark Sync class Methods
@@ -369,14 +350,6 @@ void rtmpLog(int level, const char *fmt, va_list args) {
     writeQueueInUse_ = inUse;
   }
 }
-
-/*
-- (NSMutableArray *)usedBlocks {
-  @synchronized (usedBlocks_) {
-    return usedBlocks_;
-  }
-}
-*/
 
 @end
 
