@@ -28,6 +28,9 @@ NSString *const kErrorDomain = @"com.ifactory.lab.rtmp.wrapper";
 - (void)internalWrite:(id)buffer;
 - (void)appendData:(NSData *)data
     withCompletion:(WriteCompleteHandler)completion;
+// Resize data buffer for the given data. If the buffer size is bigger than
+// max size, remove first input and return error to the completion handler.
+- (void)resizeBuffer:(NSData *)data;
 
 @property (nonatomic, retain) NSString *rtmpUrl;
 @property (nonatomic, assign) BOOL writeEnable;
@@ -159,22 +162,27 @@ void rtmpLog(int level, const char *fmt, va_list args) {
 #pragma mark -
 #pragma mark Private Methods
 
-// Resize data buffer for the given data. If the buffer size is bigger than
-// max size, remove first input and return error to the completion handler.
 - (void)resizeBuffer:(NSData *)data {
+    // While resizing buffer, no input / read / deletion allowed
   while (self.flvBuffer.count > 1 &&
-         bufferSize + data.length > maxBufferSizeInKbyte * 1024) {
-    NSDictionary *b = [self.flvBuffer firstObject];
-    bufferSize -= [[b objectForKey:@"length"] integerValue];
+         bufferSize > maxBufferSizeInKbyte * 1024) {
+    id b = [self popFirstBuffer];
+    if (!b || ![b isKindOfClass:[NSDictionary class]]) {
+      break;
+    }
+    
     WriteCompleteHandler handler = [b objectForKey:@"completion"];
-   
     NSError *error =
       [RtmpWrapper errorRTMPFailedWithReason:@"RTMP buffer is full because "
-                                              "either frequent send failing or"
+                                              "either frequent send failing or "
                                               "some reason."
                                      andCode:RTMPErrorBufferFull];
-    handler(-1, error);
-    [self.flvBuffer removeObject:b];
+    if (handler) {
+      // We have to release handler object because we copied earlier for safety
+      // of multithread use
+      handler(-1, error);
+      [handler release];
+    }
   }
 }
 
@@ -183,21 +191,18 @@ void rtmpLog(int level, const char *fmt, va_list args) {
   NSMutableDictionary *b = [[NSMutableDictionary alloc] init];
   [b setObject:data forKey:@"data"];
   [b setObject:[NSString stringWithFormat:@"%d", data.length] forKey:@"length"];
-  [b setObject:[[completion copy] autorelease] forKey:@"completion"];
+  [b setObject:[completion copy] forKey:@"completion"];
   return [b autorelease];
 }
 
 - (void)appendData:(NSData *)data
     withCompletion:(WriteCompleteHandler)completion {
-  NSDictionary *b = [self setWriteObject:data
-                          withCompletion:completion];
-  bufferSize += data.length;
-  [self.flvBuffer addObject:b];
+  NSDictionary *b = [self setWriteObject:data withCompletion:completion];
+  [self pushBuffer:b];
 }
 
 - (void)internalWrite:(id)buffer {
-  NSEnumerator *e = [self.flvBuffer objectEnumerator];
-  id item = (buffer == nil ? [e nextObject] : buffer);
+  id item = (buffer == nil ? [self popFirstBuffer] : buffer);
   if (item) {
     NSData *data = [item objectForKey:@"data"];
     NSUInteger length = [[item objectForKey:@"length"] integerValue];
@@ -208,33 +213,36 @@ void rtmpLog(int level, const char *fmt, va_list args) {
       NSError *error =
         [RtmpWrapper errorRTMPFailedWithReason:@"Timed out for writing"
                                        andCode:RTMPErrorWriteTimeout];
-      handler(sent, error);
+      if (handler) {
+        handler(sent, error);
+        [handler release];
+      }
+      
+      self.writeQueueInUse = NO;
     };
     
     IFExecutionBlock executionBlock = ^(IFTimeoutBlock *b) {
       NSError *error = nil;
-      @synchronized (self) {
-        sent = [self rtmpWrite:data];
-        if (sent != length) {
-          error =
-            [RtmpWrapper errorRTMPFailedWithReason:
+      sent = [self rtmpWrite:data];
+      if (sent != length) {
+        error =
+        [RtmpWrapper errorRTMPFailedWithReason:
              [NSString stringWithFormat:@"Failed to write data"]
-                                           andCode:RTMPErrorWriteFail];
-        }
+                                       andCode:RTMPErrorWriteFail];
       }
       
       [b signal];
       if (!b.timedOut) {
-        handler(sent, error);
+        if (handler) {
+          handler(sent, error);
+          [handler release];
+        }
         if (error == nil) {
-          [self.flvBuffer removeObject:item];
-          bufferSize -= length;
-          
           if (self.flvBuffer.count > 0) {
             [self internalWrite:nil];
             return;
           }
-        }
+        } 
       }
       self.writeQueueInUse = NO;
     };
@@ -302,16 +310,21 @@ void rtmpLog(int level, const char *fmt, va_list args) {
     
     // Resize buffer for the given data.
     [self resizeBuffer:data];
+    
     // Once queue is not in use, try to write data
     if (!self.writeQueueInUse) {
       self.writeQueueInUse = YES;
-      [self internalWrite:nil];
+      @synchronized (self) {
+        [self internalWrite:nil];
+      }
     }
   } else {
     // If priority is high, create a write object and write it directly
     NSDictionary *obj = [self setWriteObject:data
                               withCompletion:completion];
-    [self internalWrite:obj];
+    @synchronized (self) {
+      [self internalWrite:obj];
+    }
   }
 }
 
@@ -351,6 +364,30 @@ void rtmpLog(int level, const char *fmt, va_list args) {
 
 #pragma mark -
 #pragma mark Setters and Getters Methods
+
+- (id)popFirstBuffer {
+  @synchronized (flvBuffer_) {
+    id obj = nil;
+    if (flvBuffer_.count > 0) {
+      obj = flvBuffer_.firstObject;
+      if (obj) {
+        bufferSize -= [[obj objectForKey:@"length"] integerValue];
+        [obj retain];
+        [flvBuffer_ removeObject:obj];
+      }
+    }
+    return [obj autorelease];
+  }
+}
+
+- (void)pushBuffer:(id)obj {
+  @synchronized (flvBuffer_) {
+    if (obj) {
+      bufferSize += [[obj objectForKey:@"length"] integerValue];
+      [flvBuffer_ addObject:obj];      
+    }
+  }
+}
 
 - (NSMutableArray *)flvBuffer {
   @synchronized (flvBuffer_) {

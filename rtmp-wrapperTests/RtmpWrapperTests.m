@@ -298,16 +298,18 @@ NSString const* kSourceMP4 = @"http://clips.vorwaerts-gmbh.de/big_buck_bunny.mp4
   RtmpWrapper *rtmp = [[RtmpWrapper alloc] init];
   [rtmp setLogInfo];
   
+  dispatch_queue_t test_queue =
+    dispatch_queue_create("test", DISPATCH_QUEUE_SERIAL);
   BOOL ret = [rtmp rtmpOpenWithURL:kRtmpEP enableWrite:YES];
   XCTAssertTrue(ret);
   if (ret) {
     NSData *video =
-    [NSData dataWithContentsOfURL:[NSURL URLWithString:(NSString *)kSourceFLV]];
+      [NSData dataWithContentsOfURL:[NSURL URLWithString:(NSString *)kSourceFLV]];
     // [NSData dataWithContentsOfURL:[NSURL URLWithString:(NSString *)kSourceMP4]];
     NSLog(@"original video length: %d", [video length]);
     
     NSUInteger length = [video length];
-    NSUInteger chunkSize = 100 * 5120;
+    NSUInteger chunkSize = 1024 * 100;
     NSUInteger offset = 0;
     int i = 0;
     __block int done = 0;
@@ -319,19 +321,24 @@ NSString const* kSourceMP4 = @"http://clips.vorwaerts-gmbh.de/big_buck_bunny.mp4
                                      freeWhenDone:NO];
       offset += thisChunkSize;
       
-      dispatch_async(dispatch_queue_create("test", DISPATCH_QUEUE_SERIAL), ^{
+      dispatch_async(test_queue, ^{
         [rtmp rtmpWrite:chunk withCompletion:^(NSUInteger sent, NSError *error) {
           // Signal that block has completed
           done++;
+          NSLog(@"DONE: %d, SENT: %d, ERROR: %@", done, sent, error);
         }];
       });
       
-      if (i++ > 10) {
+      NSLog(@"TRY: %d", ++i);
+      if (i > 9) {
         break;
       }
     } while (offset < length);
     
     while (i != done) {
+      if (done > i) {
+        break;
+      }
       sleep(1);
     }
     
