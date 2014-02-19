@@ -96,13 +96,6 @@ void rtmpLog(int level, const char *fmt, va_list args) {
   if (flvBuffer_) {
     [flvBuffer_ release];
   }
-  /*
-  [self disposeUsedBlocks];
-  
-  if (usedBlocks_) {
-    [usedBlocks_ release];
-  }
-   */
   // Release rtmp context
   RTMP_Free(rtmp_);
   
@@ -172,72 +165,59 @@ void rtmpLog(int level, const char *fmt, va_list args) {
   NSMutableDictionary *b = [[NSMutableDictionary alloc] init];
   [b setObject:data forKey:@"data"];
   [b setObject:[NSString stringWithFormat:@"%d", data.length] forKey:@"length"];
-  [b setObject:completion forKey:@"completion"];
+  [b setObject:[[completion copy] autorelease] forKey:@"completion"];
   
   bufferSize += data.length;
 
-  @synchronized (self) {
-    // NSLog(@"item to write added (%u)", data.length);
-    [self.flvBuffer addObject:b];
-  }
+  [self.flvBuffer addObject:b];
   [b release];
 }
 
 - (void)write {
-  NSMutableDictionary *item = nil;
-  if (self.flvBuffer.count > 0) {
-    self.writeQueueInUse = YES;
-    item = [self.flvBuffer objectAtIndex:0];
-  }
-  
-  if (item) {
+  NSEnumerator *e = [self.flvBuffer objectEnumerator];
+  id item;
+  // NSMutableArray *discardedItems = [NSMutableArray array];
+  // while (item = [e nextObject]) {
+  if (item = [e nextObject]) {
     NSData *data = [item objectForKey:@"data"];
-    int length = [[item objectForKey:@"length"] integerValue];
+    NSUInteger length = [[item objectForKey:@"length"] integerValue];
     WriteCompleteHandler handler = [item objectForKey:@"completion"];
     
-    IFTimeoutBlock *block = [[IFTimeoutBlock alloc] init];
     IFTimeoutHandler timeoutBlock = ^(IFTimeoutBlock *block) {
-      NSError *error =
-        [RtmpWrapper errorRTMPFailedWithReason:@"Timed out for writing"
-                                       andCode:RTMPErrorWriteTimeout];
-      handler(-1, error);
     };
     
-    IFExecutionBlock execution = ^(IFTimeoutBlock *block) {
+    IFExecutionBlock executionBlock = ^(IFTimeoutBlock *b) {
       NSError *error = nil;
       NSUInteger sent = -1;
       @synchronized (self) {
         sent = [self rtmpWrite:data];
         if (sent != length) {
           error =
-            [RtmpWrapper errorRTMPFailedWithReason:[NSString stringWithFormat:@"Failed to write data"]
-                                           andCode:RTMPErrorWriteFail];
+          [RtmpWrapper errorRTMPFailedWithReason:[NSString stringWithFormat:@"Failed to write data"]
+                                         andCode:RTMPErrorWriteFail];
         }
       }
       
-      [block signal];
-      if (!block.timedOut) {
+      [b signal];
+      if (!b.timedOut) {
         handler(sent, error);
         if (error == nil) {
           [self.flvBuffer removeObject:item];
           bufferSize -= length;
+          
           if (self.flvBuffer.count > 0) {
             [self write];
-          } else {
-            self.writeQueueInUse = NO;
+            return;
           }
-        } else {
-          // If call fails or timed out, don't remove item and try again.
-          // Let user decide whether reconnect or send it.
-          self.writeQueueInUse = NO;
         }
       }
+      self.writeQueueInUse = NO;
     };
     
-    // NSLog(@"execute write call in async (%u)", length);
+    IFTimeoutBlock *block = [[IFTimeoutBlock alloc] init];
     [block setExecuteAsyncWithTimeout:5
                           WithHandler:timeoutBlock
-                    andExecutionBlock:execution];
+                    andExecutionBlock:executionBlock];
     [block release];
   }
 }
@@ -282,12 +262,16 @@ void rtmpLog(int level, const char *fmt, va_list args) {
    withCompletion:(WriteCompleteHandler)completion {
   if (data) {
     [self appendData:data withCompletion:completion];
-  }  
+  }
   
-  if (!self.writeQueueInUse) {
-    // Resize buffer for the given data.
-    [self resizeBuffer:data];
-    [self write];
+  @synchronized (self) {
+    if (!self.writeQueueInUse) {
+      self.writeQueueInUse = YES;
+      NSLog(@"ABOUT TO WRITE DATA FROM QUEUE");
+      // Resize buffer for the given data.
+      // [self resizeBuffer:data];
+      [self write];
+    }
   }
 }
 
@@ -329,6 +313,7 @@ void rtmpLog(int level, const char *fmt, va_list args) {
 
 - (NSMutableArray *)flvBuffer {
   @synchronized (flvBuffer_) {
+    NSLog(@"flvBuffer: %d", flvBuffer_.count);
     return flvBuffer_;
   }
 }

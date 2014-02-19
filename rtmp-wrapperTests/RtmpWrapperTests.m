@@ -31,7 +31,7 @@ NSString const* kSourceMP4 = @"http://clips.vorwaerts-gmbh.de/big_buck_bunny.mp4
   // each test method in the class.
   [super tearDown];
 }
-
+/*
 - (void)testOpenURL {
   RtmpWrapper *rtmp = [[RtmpWrapper alloc] init];
   BOOL ret = [rtmp rtmpOpenWithURL:kRtmpEP enableWrite:YES];
@@ -86,7 +86,7 @@ NSString const* kSourceMP4 = @"http://clips.vorwaerts-gmbh.de/big_buck_bunny.mp4
   RtmpWrapper *rtmp = [[RtmpWrapper alloc] init];
   [rtmp setLogInfo];
   
-  BOOL ret = [rtmp rtmpOpenWithURL:(NSString *)kRtmpEP enableWrite:YES];
+  BOOL ret = [rtmp rtmpOpenWithURL:kRtmpEP enableWrite:YES];
   XCTAssertTrue(ret);
   if (ret) {    
     NSData *video =
@@ -121,7 +121,7 @@ NSString const* kSourceMP4 = @"http://clips.vorwaerts-gmbh.de/big_buck_bunny.mp4
   RtmpWrapper *rtmp = [[RtmpWrapper alloc] init];
   [rtmp setLogInfo];
   
-  BOOL ret = [rtmp rtmpOpenWithURL:(NSString *)kRtmpEP enableWrite:YES];
+  BOOL ret = [rtmp rtmpOpenWithURL:kRtmpEP enableWrite:YES];
   XCTAssertTrue(ret);
   XCTAssertTrue(rtmp.connected);
   [rtmp rtmpClose];
@@ -134,7 +134,7 @@ NSString const* kSourceMP4 = @"http://clips.vorwaerts-gmbh.de/big_buck_bunny.mp4
   RtmpWrapper *rtmp = [[RtmpWrapper alloc] init];
   [rtmp setLogInfo];
   
-  BOOL ret = [rtmp rtmpOpenWithURL:(NSString *)kRtmpEP enableWrite:YES];
+  BOOL ret = [rtmp rtmpOpenWithURL:kRtmpEP enableWrite:YES];
   XCTAssertTrue(ret);
   if (ret) {
     NSData *video =
@@ -237,60 +237,6 @@ NSString const* kSourceMP4 = @"http://clips.vorwaerts-gmbh.de/big_buck_bunny.mp4
   [rtmp release];
 }
 
-- (void)testAsyncWriteMultiData {
-  dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-  RtmpWrapper *rtmp = [[RtmpWrapper alloc] init];
-  [rtmp setLogInfo];
-  
-  BOOL ret = [rtmp rtmpOpenWithURL:kRtmpEP enableWrite:YES];
-  XCTAssertTrue(ret);
-  if (ret) {
-    NSData *video =
-    [NSData dataWithContentsOfURL:[NSURL URLWithString:(NSString *)kSourceFLV]];
-    // [NSData dataWithContentsOfURL:[NSURL URLWithString:(NSString *)kSourceMP4]];
-    NSLog(@"original video length: %d", [video length]);
-    
-    NSUInteger length = [video length];
-    NSUInteger chunkSize = 100 * 5120;
-    NSUInteger offset = 0;
-    int i = 0;
-    __block int done = 0;
-    
-    do {
-      NSUInteger thisChunkSize = length - offset > chunkSize ? chunkSize : length - offset;
-      NSData* chunk = [NSData dataWithBytesNoCopy:(char *)[video bytes] + offset
-                                           length:thisChunkSize
-                                     freeWhenDone:NO];
-      offset += thisChunkSize;
-      
-      [rtmp rtmpWrite:chunk withCompletion:^(NSUInteger sent, NSError *error) {
-        // Signal that block has completed
-        done++;
-      }];
-      
-      if (i++ > 10) {
-        break;
-      }
-    } while (offset < length);
-    
-    while (i != done) {
-      sleep(1);
-    }
-    
-    dispatch_semaphore_signal(semaphore);
-  }
-  
-  while (dispatch_semaphore_wait(semaphore, DISPATCH_TIME_NOW)) {
-    [[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode
-                             beforeDate:[NSDate dateWithTimeIntervalSinceNow:1]];
-  }
-  
-  dispatch_release(semaphore);
-
-  [rtmp rtmpClose];
-  [rtmp release];
-}
-
 - (void)testAsyncWriteBufferOverflow {
   dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
   RtmpWrapper *rtmp = [[RtmpWrapper alloc] init];
@@ -302,8 +248,6 @@ NSString const* kSourceMP4 = @"http://clips.vorwaerts-gmbh.de/big_buck_bunny.mp4
   if (ret) {
     NSData *video =
     [NSData dataWithContentsOfURL:[NSURL URLWithString:(NSString *)kSourceFLV]];
-    // [NSData dataWithContentsOfURL:[NSURL URLWithString:(NSString *)kSourceMP4]];
-    NSLog(@"original video length: %d", [video length]);
     
     NSUInteger length = [video length];
     NSUInteger chunkSize = 1024 * 5;
@@ -349,5 +293,62 @@ NSString const* kSourceMP4 = @"http://clips.vorwaerts-gmbh.de/big_buck_bunny.mp4
   [rtmp release];
 }
 
+*/
+
+- (void)testAsyncWriteMultiData {
+  dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
+  RtmpWrapper *rtmp = [[RtmpWrapper alloc] init];
+  [rtmp setLogInfo];
+  
+  BOOL ret = [rtmp rtmpOpenWithURL:kRtmpEP enableWrite:YES];
+  XCTAssertTrue(ret);
+  if (ret) {
+    NSData *video =
+    [NSData dataWithContentsOfURL:[NSURL URLWithString:(NSString *)kSourceFLV]];
+    // [NSData dataWithContentsOfURL:[NSURL URLWithString:(NSString *)kSourceMP4]];
+    NSLog(@"original video length: %d", [video length]);
+    
+    NSUInteger length = [video length];
+    NSUInteger chunkSize = 100 * 5120;
+    NSUInteger offset = 0;
+    int i = 0;
+    __block int done = 0;
+    
+    do {
+      NSUInteger thisChunkSize = length - offset > chunkSize ? chunkSize : length - offset;
+      NSData* chunk = [NSData dataWithBytesNoCopy:(char *)[video bytes] + offset
+                                           length:thisChunkSize
+                                     freeWhenDone:NO];
+      offset += thisChunkSize;
+      
+      dispatch_async(dispatch_queue_create("test", DISPATCH_QUEUE_SERIAL), ^{
+        [rtmp rtmpWrite:chunk withCompletion:^(NSUInteger sent, NSError *error) {
+          // Signal that block has completed
+          done++;
+        }];
+      });
+      
+      if (i++ > 10) {
+        break;
+      }
+    } while (offset < length);
+    
+    while (i != done) {
+      sleep(1);
+    }
+    
+    dispatch_semaphore_signal(semaphore);
+  }
+  
+  while (dispatch_semaphore_wait(semaphore, DISPATCH_TIME_NOW)) {
+    [[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode
+                             beforeDate:[NSDate dateWithTimeIntervalSinceNow:1]];
+  }
+  
+  dispatch_release(semaphore);
+  
+  [rtmp rtmpClose];
+  [rtmp release];
+}
 
 @end
