@@ -271,9 +271,9 @@ void rtmpLog(int level, const char *fmt, va_list args) {
   @synchronized (self) {
     if (!self.writeQueueInUse) {
       self.writeQueueInUse = YES;
-      NSLog(@"ABOUT TO WRITE DATA FROM QUEUE");
+      // NSLog(@"ABOUT TO WRITE DATA FROM QUEUE");
       // Resize buffer for the given data.
-      // [self resizeBuffer:data];
+      [self resizeBuffer:data];
       [self write];
     }
   }
@@ -317,7 +317,6 @@ void rtmpLog(int level, const char *fmt, va_list args) {
 
 - (NSMutableArray *)flvBuffer {
   @synchronized (flvBuffer_) {
-    NSLog(@"flvBuffer: %d", flvBuffer_.count);
     return flvBuffer_;
   }
 }
