@@ -121,11 +121,9 @@ void rtmpLog(int level, const char *fmt, va_list args) {
 
 - (BOOL)reconnect {
   if (!RTMP_IsConnected(rtmp_)) {
-    if (!RTMP_Connect(rtmp_, NULL)) {
-      return NO;
-    }
+    RTMP_Close(rtmp_);    
   }
-  return RTMP_ReconnectStream(rtmp_, 0);
+  return [self rtmpOpenWithURL:self.rtmpUrl enableWrite:self.writeEnable];
 }
 
 + (NSError *)errorRTMPFailedWithReason:(NSString *)errorReason

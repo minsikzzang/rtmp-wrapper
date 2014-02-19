@@ -14,7 +14,7 @@
 @end
 
 // NSString *const kRtmpEP = @"{put your rtmp publishing entry point}";
-NSString *const kRtmpEP = @"rtmp://fso.ams.BBBF.edgecastcdn.net/20BBBF/default/bunny?6CtBJ5J3FMvWC44r&adbe-live-event=test-ugc";
+NSString *const kRtmpEP = @"rtmp://fso.ams.BBBF.edgecastcdn.net/20BBBF/default/unit-test?6CtBJ5J3FMvWC44r&adbe-live-event=test-ugc";
 NSString const* kSourceFLV = @"http://bcn01.livestation.com/test.flv";
 NSString const* kSourceMP4 = @"http://clips.vorwaerts-gmbh.de/big_buck_bunny.mp4";
 
@@ -31,7 +31,7 @@ NSString const* kSourceMP4 = @"http://clips.vorwaerts-gmbh.de/big_buck_bunny.mp4
   // each test method in the class.
   [super tearDown];
 }
-/*
+
 - (void)testOpenURL {
   RtmpWrapper *rtmp = [[RtmpWrapper alloc] init];
   BOOL ret = [rtmp rtmpOpenWithURL:kRtmpEP enableWrite:YES];
@@ -292,8 +292,6 @@ NSString const* kSourceMP4 = @"http://clips.vorwaerts-gmbh.de/big_buck_bunny.mp4
   [rtmp rtmpClose];
   [rtmp release];
 }
-
-*/
 
 - (void)testAsyncWriteMultiData {
   dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
