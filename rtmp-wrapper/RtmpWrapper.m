@@ -22,6 +22,7 @@ NSString *const kErrorDomain = @"com.ifactory.lab.rtmp.wrapper";
   BOOL connected_;
   BOOL writeQueueInUse_;
   NSMutableArray *flvBuffer_;
+  NSObject *lock_;
 }
 
 - (void)internalWrite:(id)buffer;
@@ -80,6 +81,7 @@ void rtmpLog(int level, const char *fmt, va_list args) {
   if (self != nil) {
     connected_ = NO;
     flvBuffer_ = [[NSMutableArray alloc] init];
+    lock_ = [[NSObject alloc] init];
     maxBufferSizeInKbyte = kMaxBufferSizeInKbyte;
     bufferSize = 0;
     writeQueueInUse_ = NO;
@@ -106,6 +108,9 @@ void rtmpLog(int level, const char *fmt, va_list args) {
   }
   if (flvBuffer_) {
     [flvBuffer_ release];
+  }
+  if (lock_) {
+    [lock_ release];
   }
   // Release rtmp context
   RTMP_Free([self getRTMP]);
@@ -360,25 +365,25 @@ void rtmpLog(int level, const char *fmt, va_list args) {
 }
 
 - (BOOL)writeQueueInUse {
-  @synchronized (self) {
+  @synchronized (lock_) {
     return writeQueueInUse_;
   }
 }
 
 - (void)setWriteQueueInUse:(BOOL)inUse {
-  @synchronized (self) {
+  @synchronized (lock_) {
     writeQueueInUse_ = inUse;
   }
 }
 
 - (void)setRTMP:(RTMP *)rtmp {
-  @synchronized (self) {
+  @synchronized (lock_) {
     rtmp_ = rtmp;
   }
 }
 
 - (RTMP *)getRTMP {
-  @synchronized (self) {
+  @synchronized (lock_) {
     return rtmp_;
   }
 }
