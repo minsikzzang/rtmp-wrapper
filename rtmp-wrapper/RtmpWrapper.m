@@ -24,6 +24,10 @@ NSString *const kErrorDomain = @"com.ifactory.lab.rtmp.wrapper";
   NSMutableArray *flvBuffer_;
 }
 
+- (void)internalWrite:(id)buffer;
+- (void)appendData:(NSData *)data
+    withCompletion:(WriteCompleteHandler)completion;
+
 @property (nonatomic, retain) NSString *rtmpUrl;
 @property (nonatomic, assign) BOOL writeEnable;
 @property (nonatomic, retain) NSMutableArray *flvBuffer;
@@ -147,6 +151,9 @@ void rtmpLog(int level, const char *fmt, va_list args) {
   return err;
 }
 
+#pragma mark -
+#pragma mark Private Methods
+
 // Resize data buffer for the given data. If the buffer size is bigger than
 // max size, remove first input and return error to the completion handler.
 - (void)resizeBuffer:(NSData *)data {
@@ -166,25 +173,27 @@ void rtmpLog(int level, const char *fmt, va_list args) {
   }
 }
 
-- (void)appendData:(NSData *)data
-    withCompletion:(WriteCompleteHandler)completion {
+- (NSDictionary *)setWriteObject:(NSData *)data
+                  withCompletion:(WriteCompleteHandler)completion {
   NSMutableDictionary *b = [[NSMutableDictionary alloc] init];
   [b setObject:data forKey:@"data"];
   [b setObject:[NSString stringWithFormat:@"%d", data.length] forKey:@"length"];
   [b setObject:[[completion copy] autorelease] forKey:@"completion"];
-  
-  bufferSize += data.length;
-
-  [self.flvBuffer addObject:b];
-  [b release];
+  return [b autorelease];
 }
 
-- (void)write {
+- (void)appendData:(NSData *)data
+    withCompletion:(WriteCompleteHandler)completion {
+  NSDictionary *b = [self setWriteObject:data
+                          withCompletion:completion];
+  bufferSize += data.length;
+  [self.flvBuffer addObject:b];
+}
+
+- (void)internalWrite:(id)buffer {
   NSEnumerator *e = [self.flvBuffer objectEnumerator];
-  id item;
-  // NSMutableArray *discardedItems = [NSMutableArray array];
-  // while (item = [e nextObject]) {
-  if (item = [e nextObject]) {
+  id item = (buffer == nil ? [e nextObject] : buffer);
+  if (item) {
     NSData *data = [item objectForKey:@"data"];
     NSUInteger length = [[item objectForKey:@"length"] integerValue];
     WriteCompleteHandler handler = [item objectForKey:@"completion"];
@@ -217,7 +226,7 @@ void rtmpLog(int level, const char *fmt, va_list args) {
           bufferSize -= length;
           
           if (self.flvBuffer.count > 0) {
-            [self write];
+            [self internalWrite:nil];
             return;
           }
         }
@@ -272,18 +281,35 @@ void rtmpLog(int level, const char *fmt, va_list args) {
 
 - (void)rtmpWrite:(NSData *)data
    withCompletion:(WriteCompleteHandler)completion {
-  if (data) {
-    [self appendData:data withCompletion:completion];
-  }
-  
-  @synchronized (self) {
-    if (!self.writeQueueInUse) {
-      self.writeQueueInUse = YES;
-      // NSLog(@"ABOUT TO WRITE DATA FROM QUEUE");
-      // Resize buffer for the given data.
-      [self resizeBuffer:data];
-      [self write];
+  [self rtmpWrite:data
+     withPriority:RTMPWritePriorityNormal
+   withCompletion:completion];
+}
+
+- (void)rtmpWrite:(NSData *)data
+     withPriority:(RTMPWritePriority)priority
+   withCompletion:(WriteCompleteHandler)completion {
+  // If priority is not high, put it into queue
+  if (priority != RTMPWritePriorityHigh) {
+    if (data) {
+      [self appendData:data withCompletion:completion];
     }
+    
+    // Once queue is not in use, try to write data
+    @synchronized (self) {
+      if (!self.writeQueueInUse) {
+        self.writeQueueInUse = YES;
+        // NSLog(@"ABOUT TO WRITE DATA FROM QUEUE");
+        // Resize buffer for the given data.
+        [self resizeBuffer:data];
+        [self internalWrite:nil];
+      }
+    }
+  } else {
+    // If priority is high, create a write object and write it directly
+    NSDictionary *obj = [self setWriteObject:data
+                              withCompletion:completion];
+    [self internalWrite:obj];
   }
 }
 

@@ -19,6 +19,12 @@ typedef enum RTMPErrorCode {
   RTMPErrorWriteTimeout
 } RTMPErrorCode;
 
+typedef enum RTMPWritePriority {
+  RTMPWritePriorityLow = 0,
+  RTMPWritePriorityNormal,
+  RTMPWritePriorityHigh
+} RTMPWritePriority;
+
 @interface RtmpWrapper : NSObject
 
 /**
@@ -55,6 +61,10 @@ typedef enum RTMPErrorCode {
  @param completion
  */
 - (void)rtmpWrite:(NSData *)data
+   withCompletion:(WriteCompleteHandler)completion;
+  
+- (void)rtmpWrite:(NSData *)data
+     withPriority:(RTMPWritePriority)priority
    withCompletion:(WriteCompleteHandler)completion;
 
 - (void)appendData:(NSData *)data
