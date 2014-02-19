@@ -159,7 +159,7 @@ void rtmpLog(int level, const char *fmt, va_list args) {
 - (void)resizeBuffer:(NSData *)data {
   while (self.flvBuffer.count > 1 &&
          bufferSize + data.length > maxBufferSizeInKbyte * 1024) {
-    NSDictionary *b = [self.flvBuffer objectAtIndex:0];
+    NSDictionary *b = [self.flvBuffer firstObject];
     bufferSize -= [[b objectForKey:@"length"] integerValue];
     WriteCompleteHandler handler = [b objectForKey:@"completion"];
    
@@ -169,7 +169,7 @@ void rtmpLog(int level, const char *fmt, va_list args) {
                                               "some reason."
                                      andCode:RTMPErrorBufferFull];
     handler(-1, error);
-    [self.flvBuffer removeObjectAtIndex:0];
+    [self.flvBuffer removeObject:b];
   }
 }
 
@@ -295,15 +295,12 @@ void rtmpLog(int level, const char *fmt, va_list args) {
       [self appendData:data withCompletion:completion];
     }
     
+    // Resize buffer for the given data.
+    [self resizeBuffer:data];
     // Once queue is not in use, try to write data
-    @synchronized (self) {
-      if (!self.writeQueueInUse) {
-        self.writeQueueInUse = YES;
-        // NSLog(@"ABOUT TO WRITE DATA FROM QUEUE");
-        // Resize buffer for the given data.
-        [self resizeBuffer:data];
-        [self internalWrite:nil];
-      }
+    if (!self.writeQueueInUse) {
+      self.writeQueueInUse = YES;
+      [self internalWrite:nil];
     }
   } else {
     // If priority is high, create a write object and write it directly
