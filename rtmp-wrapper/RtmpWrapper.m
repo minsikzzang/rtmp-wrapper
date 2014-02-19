@@ -33,9 +33,9 @@ NSString *const kErrorDomain = @"com.ifactory.lab.rtmp.wrapper";
 - (void)resizeBuffer:(NSData *)data;
 
 @property (nonatomic, retain) NSString *rtmpUrl;
-@property (nonatomic, assign) BOOL writeEnable;
 @property (nonatomic, retain) NSMutableArray *flvBuffer;
 @property (nonatomic, assign) NSInteger bufferSize;
+@property (nonatomic, assign) BOOL writeEnable;
 @property (nonatomic, assign) BOOL writeQueueInUse;
 
 @end
@@ -45,8 +45,8 @@ NSString *const kErrorDomain = @"com.ifactory.lab.rtmp.wrapper";
 @synthesize connected = connected_;
 @synthesize rtmpUrl;
 @synthesize writeEnable;
-@synthesize maxBufferSizeInKbyte;
 @synthesize bufferSize;
+@synthesize maxBufferSizeInKbyte;
 @synthesize rtmpOpenTimeout;
 @synthesize rtmpWriteTimeout;
 
@@ -143,8 +143,6 @@ void rtmpLog(int level, const char *fmt, va_list args) {
 }
 
 - (BOOL)reconnect {
-  // It would be already disconnected, but to make sure, do close again.
-  [self rtmpClose];
   return [self rtmpOpenWithURL:self.rtmpUrl enableWrite:self.writeEnable];
 }
 
@@ -227,18 +225,22 @@ void rtmpLog(int level, const char *fmt, va_list args) {
       sent = [self rtmpWrite:data];
       if (sent != length) {
         error =
-        [RtmpWrapper errorRTMPFailedWithReason:
-             [NSString stringWithFormat:@"Failed to write data"]
-                                       andCode:RTMPErrorWriteFail];
+          [RtmpWrapper errorRTMPFailedWithReason:
+           [NSString stringWithFormat:@"Failed to write data "
+                                       "(sent: %d, length: %d)", sent, length]
+                                         andCode:RTMPErrorWriteFail];
       }
       
       [b signal];
+      // If block has timed out, don't call callback function.
       if (!b.timedOut) {
         if (handler) {
           handler(sent, error);
           [handler release];
         }
-        if (error == nil) {
+        // If there is no error and there are more buffers to be sent,
+        // call itself again.
+        if (!error) {
           if (self.flvBuffer.count > 0) {
             [self internalWrite:nil];
             return;
