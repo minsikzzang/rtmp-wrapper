@@ -74,6 +74,8 @@ typedef enum RTMPWritePriority {
 
 - (BOOL)reconnect;
 
+- (void)clearRtmpBuffer;
+
 @property (nonatomic, assign, getter = isConnected) BOOL connected;
 @property (nonatomic, assign) NSUInteger maxBufferSizeInKbyte;
 @property (nonatomic, assign) NSUInteger rtmpOpenTimeout;

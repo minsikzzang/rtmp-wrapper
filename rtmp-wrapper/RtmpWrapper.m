@@ -363,6 +363,21 @@ void rtmpLog(int level, const char *fmt, va_list args) {
   }
 }
 
+- (void)clearRtmpBuffer {
+   @synchronized (flvBuffer_) {
+     for (id b in flvBuffer_) {
+       if (!b || ![b isKindOfClass:[NSDictionary class]]) {
+         continue;
+       }
+       WriteCompleteHandler handler = [b objectForKey:@"completion"];
+       if (handler) {
+         [handler release];
+       }
+     }
+     [flvBuffer_ removeAllObjects];
+   }
+}
+
 #pragma mark -
 #pragma mark Setters and Getters Methods
 
