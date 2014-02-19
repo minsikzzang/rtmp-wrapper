@@ -66,5 +66,8 @@ typedef enum RTMPErrorCode {
 
 @property (nonatomic, assign, getter = isConnected) BOOL connected;
 @property (nonatomic, assign) NSUInteger maxBufferSizeInKbyte;
+@property (nonatomic, assign) NSUInteger rtmpOpenTimeout;
+@property (nonatomic, assign) NSUInteger rtmpWriteTimeout;
+
 
 @end

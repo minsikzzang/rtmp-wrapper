@@ -11,7 +11,9 @@
 #import <librtmp/log.h>
 #import "IFTimeoutBlock.h"
 
-const NSUInteger kMaxBufferSizeInKbyte = 500; // kb
+const NSUInteger kRtmpOpenTimeout = 5;
+const NSUInteger kRtmpWriteTimeout = 5;
+const NSUInteger kMaxBufferSizeInKbyte = 500; // kbytes
 const char *kOpenQueue = "com.ifactory.lab.rtmp.open.queue";
 NSString *const kErrorDomain = @"com.ifactory.lab.rtmp.wrapper";
 
@@ -37,6 +39,8 @@ NSString *const kErrorDomain = @"com.ifactory.lab.rtmp.wrapper";
 @synthesize writeEnable;
 @synthesize maxBufferSizeInKbyte;
 @synthesize bufferSize;
+@synthesize rtmpOpenTimeout;
+@synthesize rtmpWriteTimeout;
 
 void rtmpLog(int level, const char *fmt, va_list args) {
   NSString *log = @"";
@@ -75,6 +79,8 @@ void rtmpLog(int level, const char *fmt, va_list args) {
     maxBufferSizeInKbyte = kMaxBufferSizeInKbyte;
     bufferSize = 0;
     writeQueueInUse_ = NO;
+    rtmpOpenTimeout = kRtmpOpenTimeout;
+    rtmpWriteTimeout = kRtmpWriteTimeout;
     
     signal(SIGPIPE, SIG_IGN);
     
@@ -120,9 +126,8 @@ void rtmpLog(int level, const char *fmt, va_list args) {
 }
 
 - (BOOL)reconnect {
-  if (!RTMP_IsConnected(rtmp_)) {
-    RTMP_Close(rtmp_);    
-  }
+  // It would be already disconnected, but to make sure, do close again.
+  RTMP_Close(rtmp_);    
   return [self rtmpOpenWithURL:self.rtmpUrl enableWrite:self.writeEnable];
 }
 
@@ -184,8 +189,8 @@ void rtmpLog(int level, const char *fmt, va_list args) {
     
     IFTimeoutHandler timeoutBlock = ^(IFTimeoutBlock *block) {
       NSError *error =
-      [RtmpWrapper errorRTMPFailedWithReason:@"Timed out for writing"
-                                     andCode:RTMPErrorWriteTimeout];
+        [RtmpWrapper errorRTMPFailedWithReason:@"Timed out for writing"
+                                       andCode:RTMPErrorWriteTimeout];
       handler(sent, error);
     };
     
@@ -195,8 +200,9 @@ void rtmpLog(int level, const char *fmt, va_list args) {
         sent = [self rtmpWrite:data];
         if (sent != length) {
           error =
-          [RtmpWrapper errorRTMPFailedWithReason:[NSString stringWithFormat:@"Failed to write data"]
-                                         andCode:RTMPErrorWriteFail];
+            [RtmpWrapper errorRTMPFailedWithReason:
+             [NSString stringWithFormat:@"Failed to write data"]
+                                           andCode:RTMPErrorWriteFail];
         }
       }
       
@@ -217,7 +223,7 @@ void rtmpLog(int level, const char *fmt, va_list args) {
     };
     
     IFTimeoutBlock *block = [[IFTimeoutBlock alloc] init];
-    [block setExecuteAsyncWithTimeout:5
+    [block setExecuteAsyncWithTimeout:rtmpWriteTimeout
                           WithHandler:timeoutBlock
                     andExecutionBlock:executionBlock];
     [block release];
@@ -232,10 +238,11 @@ void rtmpLog(int level, const char *fmt, va_list args) {
          withCompletion:(OpenCompleteHandler)handler {
   IFTimeoutBlock *block = [[IFTimeoutBlock alloc] init];
   IFTimeoutHandler timeoutBlock = ^(IFTimeoutBlock *block) {
+    // Deal with rtmp open timed out
     NSError *error =
-    [RtmpWrapper errorRTMPFailedWithReason:
-     [NSString stringWithFormat:@"Timed out for openning %@", url]
-                                   andCode:RTMPErrorOpenTimeout];
+      [RtmpWrapper errorRTMPFailedWithReason:
+       [NSString stringWithFormat:@"Timed out for openning %@", url]
+                                     andCode:RTMPErrorOpenTimeout];
     handler(error);
   };
   
@@ -243,9 +250,9 @@ void rtmpLog(int level, const char *fmt, va_list args) {
     NSError *error = nil;
     if (![self rtmpOpenWithURL:url enableWrite:enableWrite]) {
       error =
-      [RtmpWrapper errorRTMPFailedWithReason:
-       [NSString stringWithFormat:@"Cannot open %@", url]
-                                     andCode:RTMPErrorURLOpenFail];
+        [RtmpWrapper errorRTMPFailedWithReason:
+         [NSString stringWithFormat:@"Cannot open %@", url]
+                                       andCode:RTMPErrorURLOpenFail];
     }
     
     [block signal];
@@ -254,7 +261,7 @@ void rtmpLog(int level, const char *fmt, va_list args) {
     }
   };
   
-  [block setExecuteAsyncWithTimeout:3
+  [block setExecuteAsyncWithTimeout:rtmpOpenTimeout
                         WithHandler:timeoutBlock
                   andExecutionBlock:execution];
   [block release];
