@@ -134,9 +134,11 @@ void rtmpLog(int level, const char *fmt, va_list args) {
 }
 
 - (void)rtmpClose {
-  RTMP *r = [self getRTMP];
-  if (r) {
-    RTMP_Close(r);
+  @synchronized (self) {
+    RTMP *r = [self getRTMP];
+    if (r) {
+      RTMP_Close(r);
+    }
   }
 }
 
