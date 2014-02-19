@@ -85,7 +85,8 @@ void rtmpLog(int level, const char *fmt, va_list args) {
     signal(SIGPIPE, SIG_IGN);
     
     // Allocate rtmp context object
-    rtmp_ = RTMP_Alloc();
+    [self setRTMP:RTMP_Alloc()];
+    
     RTMP_LogSetLevel(RTMP_LOGALL);
     RTMP_LogCallback(rtmpLog);
   }
@@ -103,7 +104,7 @@ void rtmpLog(int level, const char *fmt, va_list args) {
     [flvBuffer_ release];
   }
   // Release rtmp context
-  RTMP_Free(rtmp_);
+  RTMP_Free([self getRTMP]);
   
   [super dealloc];
 }
@@ -113,21 +114,23 @@ void rtmpLog(int level, const char *fmt, va_list args) {
 }
 
 - (BOOL)isConnected {
-  if (rtmp_) {
-    connected_ = RTMP_IsConnected(rtmp_);
+  RTMP *r = [self getRTMP];
+  if (r) {
+    connected_ = RTMP_IsConnected(r);
   }
   return connected_;
 }
 
 - (void)rtmpClose {
-  if (rtmp_) {
-    RTMP_Close(rtmp_);
+  RTMP *r = [self getRTMP];
+  if (r) {
+    RTMP_Close(r);
   }
 }
 
 - (BOOL)reconnect {
   // It would be already disconnected, but to make sure, do close again.
-  RTMP_Close(rtmp_);    
+  [self rtmpClose];
   return [self rtmpOpenWithURL:self.rtmpUrl enableWrite:self.writeEnable];
 }
 
@@ -288,8 +291,9 @@ void rtmpLog(int level, const char *fmt, va_list args) {
 #pragma mark Sync class Methods
 
 - (BOOL)rtmpOpenWithURL:(NSString *)url enableWrite:(BOOL)enableWrite {
-  RTMP_Init(rtmp_);
-  if (!RTMP_SetupURL(rtmp_,
+  RTMP *r = [self getRTMP];
+  RTMP_Init(r);
+  if (!RTMP_SetupURL(r,
                      (char *)[url cStringUsingEncoding:NSASCIIStringEncoding])) {
     return NO;
   }
@@ -298,21 +302,21 @@ void rtmpLog(int level, const char *fmt, va_list args) {
   self.writeEnable = enableWrite;
   
   if (enableWrite) {
-    RTMP_EnableWrite(rtmp_);
+    RTMP_EnableWrite(r);
   }
   
-  if (!RTMP_Connect(rtmp_, NULL) || !RTMP_ConnectStream(rtmp_, 0)) {
+  if (!RTMP_Connect(r, NULL) || !RTMP_ConnectStream(r, 0)) {
     return NO;
   }
   
-  connected_ = RTMP_IsConnected(rtmp_);
+  connected_ = RTMP_IsConnected(r);
   return YES;
 }
 
 - (NSUInteger)rtmpWrite:(NSData *)data {
   int sent = -1;
   if (self.connected) {
-    sent = RTMP_Write(rtmp_, [data bytes], [data length]);
+    sent = RTMP_Write([self getRTMP], [data bytes], [data length]);
   }
   return sent;
 }
@@ -341,6 +345,18 @@ void rtmpLog(int level, const char *fmt, va_list args) {
 - (void)setWriteQueueInUse:(BOOL)inUse {
   @synchronized (self) {
     writeQueueInUse_ = inUse;
+  }
+}
+
+- (void)setRTMP:(RTMP *)rtmp {
+  @synchronized (self) {
+    rtmp_ = rtmp;
+  }
+}
+
+- (RTMP *)getRTMP {
+  @synchronized (self) {
+    return rtmp_;
   }
 }
 
