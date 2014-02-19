@@ -163,7 +163,6 @@ void rtmpLog(int level, const char *fmt, va_list args) {
 #pragma mark Private Methods
 
 - (void)resizeBuffer:(NSData *)data {
-    // While resizing buffer, no input / read / deletion allowed
   while (self.flvBuffer.count > 1 &&
          bufferSize > maxBufferSizeInKbyte * 1024) {
     id b = [self popFirstBuffer];
@@ -355,11 +354,13 @@ void rtmpLog(int level, const char *fmt, va_list args) {
 }
 
 - (NSUInteger)rtmpWrite:(NSData *)data {
-  int sent = -1;
-  if (self.connected) {
-    sent = RTMP_Write([self getRTMP], [data bytes], [data length]);
+  @synchronized (self) {
+    int sent = -1;
+    if (self.connected) {
+      sent = RTMP_Write([self getRTMP], [data bytes], [data length]);
+    }
+    return sent;
   }
-  return sent;
 }
 
 #pragma mark -
