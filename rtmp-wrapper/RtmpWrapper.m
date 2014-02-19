@@ -182,13 +182,17 @@ void rtmpLog(int level, const char *fmt, va_list args) {
     NSData *data = [item objectForKey:@"data"];
     NSUInteger length = [[item objectForKey:@"length"] integerValue];
     WriteCompleteHandler handler = [item objectForKey:@"completion"];
+    __block NSUInteger sent = -1;
     
     IFTimeoutHandler timeoutBlock = ^(IFTimeoutBlock *block) {
+      NSError *error =
+      [RtmpWrapper errorRTMPFailedWithReason:@"Timed out for writing"
+                                     andCode:RTMPErrorWriteTimeout];
+      handler(sent, error);
     };
     
     IFExecutionBlock executionBlock = ^(IFTimeoutBlock *b) {
       NSError *error = nil;
-      NSUInteger sent = -1;
       @synchronized (self) {
         sent = [self rtmpWrite:data];
         if (sent != length) {
