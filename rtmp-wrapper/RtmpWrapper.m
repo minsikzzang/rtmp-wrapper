@@ -109,6 +109,7 @@ void rtmpLog(int level, const char *fmt, va_list args) {
   if (rtmpUrl) {
     [rtmpUrl release];
   }
+  [self clearRtmpBuffer];
   if (flvBuffer_) {
     [flvBuffer_ release];
   }
