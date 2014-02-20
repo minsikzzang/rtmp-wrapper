@@ -41,18 +41,16 @@ typedef enum RTMPWritePriority {
   Additional RTMP library options may be appended as
   space-separated key-value pairs.
  */
-- (BOOL)rtmpOpenWithURL:(NSString *)url enableWrite:(BOOL)enableWrite;
+- (BOOL)openWithURL:(NSString *)url enableWrite:(BOOL)enableWrite;
 
-- (void)rtmpClose;
+- (void)close;
 
-- (NSUInteger)rtmpWrite:(NSData *)data;
+- (NSUInteger)write:(NSData *)data;
 
-+ (NSError *)errorRTMPFailedWithReason:(NSString *)errorReason
-                               andCode:(RTMPErrorCode)errorCode;
+- (void)openWithURL:(NSString *)url
+        enableWrite:(BOOL)enableWrite
+     withCompletion:(OpenCompleteHandler)handler;
 
-- (void)rtmpOpenWithURL:(NSString *)url
-            enableWrite:(BOOL)enableWrite
-         withCompletion:(OpenCompleteHandler)handler;
 /**
  @abstract
   Asynchronous rtmp write function
@@ -60,12 +58,12 @@ typedef enum RTMPWritePriority {
  @param data
  @param completion
  */
-- (void)rtmpWrite:(NSData *)data
-   withCompletion:(WriteCompleteHandler)completion;
+- (void)write:(NSData *)data
+withCompletion:(WriteCompleteHandler)completion;
   
-- (void)rtmpWrite:(NSData *)data
-     withPriority:(RTMPWritePriority)priority
-   withCompletion:(WriteCompleteHandler)completion;
+- (void)write:(NSData *)data
+ withPriority:(RTMPWritePriority)priority
+withCompletion:(WriteCompleteHandler)completion;
 
 - (void)appendData:(NSData *)data
     withCompletion:(WriteCompleteHandler)completion;
@@ -74,12 +72,15 @@ typedef enum RTMPWritePriority {
 
 - (BOOL)reconnect;
 
-- (void)clearRtmpBuffer;
+- (void)clearBuffer;
+
++ (NSError *)errorRTMPFailedWithReason:(NSString *)errorReason
+                               andCode:(RTMPErrorCode)errorCode;
 
 @property (nonatomic, assign, getter = isConnected) BOOL connected;
 @property (nonatomic, assign) NSUInteger maxBufferSizeInKbyte;
-@property (nonatomic, assign) NSUInteger rtmpOpenTimeout;
-@property (nonatomic, assign) NSUInteger rtmpWriteTimeout;
+@property (nonatomic, assign) NSUInteger openTimeout;
+@property (nonatomic, assign) NSUInteger writeTimeout;
 
 
 @end

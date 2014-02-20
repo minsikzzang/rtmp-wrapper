@@ -22,6 +22,7 @@ NSString *const kErrorDomain = @"com.ifactory.lab.rtmp.wrapper";
   BOOL connected_;
   BOOL writeQueueInUse_;
   NSMutableArray *flvBuffer_;
+  // Lock to protect writeQueueInUse_ variables from multi threaded access
   NSObject *lock_;
 }
 
@@ -47,8 +48,8 @@ NSString *const kErrorDomain = @"com.ifactory.lab.rtmp.wrapper";
 @synthesize writeEnable;
 @synthesize bufferSize;
 @synthesize maxBufferSizeInKbyte;
-@synthesize rtmpOpenTimeout;
-@synthesize rtmpWriteTimeout;
+@synthesize openTimeout;
+@synthesize writeTimeout;
 
 void rtmpLog(int level, const char *fmt, va_list args) {
   NSString *log = @"";
@@ -88,13 +89,10 @@ void rtmpLog(int level, const char *fmt, va_list args) {
     maxBufferSizeInKbyte = kMaxBufferSizeInKbyte;
     bufferSize = 0;
     writeQueueInUse_ = NO;
-    rtmpOpenTimeout = kRtmpOpenTimeout;
-    rtmpWriteTimeout = kRtmpWriteTimeout;
+    openTimeout = kRtmpOpenTimeout;
+    writeTimeout = kRtmpWriteTimeout;
     
     signal(SIGPIPE, SIG_IGN);
-    
-    // Allocate rtmp context object
-    [self setRTMP:RTMP_Alloc()];
     
     RTMP_LogSetLevel(RTMP_LOGALL);
     RTMP_LogCallback(rtmpLog);
@@ -103,48 +101,22 @@ void rtmpLog(int level, const char *fmt, va_list args) {
 }
 
 - (void)dealloc {
-  if (self.connected) {
-    [self rtmpClose];
-  }
   if (rtmpUrl) {
     [rtmpUrl release];
   }
-  [self clearRtmpBuffer];
+  [self clearBuffer];
   if (flvBuffer_) {
     [flvBuffer_ release];
   }
   if (lock_) {
     [lock_ release];
   }
-  // Release rtmp context
-  RTMP_Free([self getRTMP]);
-  
+  [self close];  
   [super dealloc];
 }
 
 - (void)setLogInfo {
   RTMP_LogSetLevel(RTMP_LOGINFO);
-}
-
-- (BOOL)isConnected {
-  RTMP *r = [self getRTMP];
-  if (r) {
-    connected_ = RTMP_IsConnected(r);
-  }
-  return connected_;
-}
-
-- (void)rtmpClose {
-  @synchronized (self) {
-    RTMP *r = [self getRTMP];
-    if (r) {
-      RTMP_Close(r);
-    }
-  }
-}
-
-- (BOOL)reconnect {
-  return [self rtmpOpenWithURL:self.rtmpUrl enableWrite:self.writeEnable];
 }
 
 + (NSError *)errorRTMPFailedWithReason:(NSString *)errorReason
@@ -223,7 +195,7 @@ void rtmpLog(int level, const char *fmt, va_list args) {
     
     IFExecutionBlock executionBlock = ^(IFTimeoutBlock *b) {
       NSError *error = nil;
-      sent = [self rtmpWrite:data];
+      sent = [self write:data];
       if (sent != length) {
         error =
           [RtmpWrapper errorRTMPFailedWithReason:
@@ -252,7 +224,7 @@ void rtmpLog(int level, const char *fmt, va_list args) {
     };
     
     IFTimeoutBlock *block = [[IFTimeoutBlock alloc] init];
-    [block setExecuteAsyncWithTimeout:rtmpWriteTimeout
+    [block setExecuteAsyncWithTimeout:writeTimeout
                           WithHandler:timeoutBlock
                     andExecutionBlock:executionBlock];
     [block release];
@@ -262,7 +234,7 @@ void rtmpLog(int level, const char *fmt, va_list args) {
 #pragma mark -
 #pragma mark Async class Methods
 
-- (void)rtmpOpenWithURL:(NSString *)url
+- (void)openWithURL:(NSString *)url
             enableWrite:(BOOL)enableWrite
          withCompletion:(OpenCompleteHandler)handler {
   IFTimeoutBlock *block = [[IFTimeoutBlock alloc] init];
@@ -277,7 +249,7 @@ void rtmpLog(int level, const char *fmt, va_list args) {
   
   IFExecutionBlock execution = ^(IFTimeoutBlock *block) {
     NSError *error = nil;
-    if (![self rtmpOpenWithURL:url enableWrite:enableWrite]) {
+    if (![self openWithURL:url enableWrite:enableWrite]) {
       error =
         [RtmpWrapper errorRTMPFailedWithReason:
          [NSString stringWithFormat:@"Cannot open %@", url]
@@ -290,22 +262,22 @@ void rtmpLog(int level, const char *fmt, va_list args) {
     }
   };
   
-  [block setExecuteAsyncWithTimeout:rtmpOpenTimeout
+  [block setExecuteAsyncWithTimeout:openTimeout
                         WithHandler:timeoutBlock
                   andExecutionBlock:execution];
   [block release];
 }
 
-- (void)rtmpWrite:(NSData *)data
-   withCompletion:(WriteCompleteHandler)completion {
-  [self rtmpWrite:data
-     withPriority:RTMPWritePriorityNormal
-   withCompletion:completion];
+- (void)write:(NSData *)data
+withCompletion:(WriteCompleteHandler)completion {
+  [self write:data
+ withPriority:RTMPWritePriorityNormal
+withCompletion:completion];
 }
 
-- (void)rtmpWrite:(NSData *)data
-     withPriority:(RTMPWritePriority)priority
-   withCompletion:(WriteCompleteHandler)completion {
+- (void)write:(NSData *)data
+ withPriority:(RTMPWritePriority)priority
+withCompletion:(WriteCompleteHandler)completion {
   // If priority is not high, put it into queue
   if (priority != RTMPWritePriorityHigh) {
     if (data) {
@@ -335,40 +307,49 @@ void rtmpLog(int level, const char *fmt, va_list args) {
 #pragma mark -
 #pragma mark Sync class Methods
 
-- (BOOL)rtmpOpenWithURL:(NSString *)url enableWrite:(BOOL)enableWrite {
-  RTMP *r = [self getRTMP];
-  RTMP_Init(r);
-  if (!RTMP_SetupURL(r,
-                     (char *)[url cStringUsingEncoding:NSASCIIStringEncoding])) {
-    return NO;
+- (BOOL)openWithURL:(NSString *)url enableWrite:(BOOL)enableWrite {
+  @synchronized (self) {
+    // If still opened or not nil, close it.
+    if (rtmp_) {
+      [self close];
+    }
+    
+    // Allocate rtmp context object
+    rtmp_ = RTMP_Alloc();
+    
+    RTMP_Init(rtmp_);
+    char *strUrl = (char *)[url cStringUsingEncoding:NSASCIIStringEncoding];
+    if (!RTMP_SetupURL(rtmp_, strUrl)) {
+      return NO;
+    }
+    
+    self.rtmpUrl = url;
+    self.writeEnable = enableWrite;
+    
+    if (enableWrite) {
+      RTMP_EnableWrite(rtmp_);
+    }
+    
+    if (!RTMP_Connect(rtmp_, NULL) || !RTMP_ConnectStream(rtmp_, 0)) {
+      return NO;
+    }
+    
+    connected_ = RTMP_IsConnected(rtmp_);
+    return YES;
   }
-  
-  self.rtmpUrl = url;
-  self.writeEnable = enableWrite;
-  
-  if (enableWrite) {
-    RTMP_EnableWrite(r);
-  }
-  
-  if (!RTMP_Connect(r, NULL) || !RTMP_ConnectStream(r, 0)) {
-    return NO;
-  }
-  
-  connected_ = RTMP_IsConnected(r);
-  return YES;
 }
 
-- (NSUInteger)rtmpWrite:(NSData *)data {
+- (NSUInteger)write:(NSData *)data {
   @synchronized (self) {
     int sent = -1;
     if (self.connected) {
-      sent = RTMP_Write([self getRTMP], [data bytes], [data length]);
+      sent = RTMP_Write(rtmp_, [data bytes], [data length]);
     }
     return sent;
   }
 }
 
-- (void)clearRtmpBuffer {
+- (void)clearBuffer {
    @synchronized (flvBuffer_) {
      for (id b in flvBuffer_) {
        if (!b || ![b isKindOfClass:[NSDictionary class]]) {
@@ -381,6 +362,33 @@ void rtmpLog(int level, const char *fmt, va_list args) {
      }
      [flvBuffer_ removeAllObjects];
    }
+}
+
+- (BOOL)isConnected {
+  @synchronized (self) {
+    connected_ = NO;
+    if (rtmp_) {
+      connected_ = RTMP_IsConnected(rtmp_);
+    }
+    return connected_;
+  }
+}
+
+- (void)close {
+  @synchronized (self) {
+    if (rtmp_) {
+      // Close rtmp connection
+      RTMP_Close(rtmp_);
+      
+      // Release rtmp context
+      RTMP_Free(rtmp_);
+      rtmp_ = nil;
+    }
+  }
+}
+
+- (BOOL)reconnect {
+  return [self openWithURL:self.rtmpUrl enableWrite:self.writeEnable];
 }
 
 #pragma mark -
@@ -431,18 +439,6 @@ void rtmpLog(int level, const char *fmt, va_list args) {
 - (void)setWriteQueueInUse:(BOOL)inUse {
   @synchronized (lock_) {
     writeQueueInUse_ = inUse;
-  }
-}
-
-- (void)setRTMP:(RTMP *)rtmp {
-  @synchronized (lock_) {
-    rtmp_ = rtmp;
-  }
-}
-
-- (RTMP *)getRTMP {
-  @synchronized (lock_) {
-    return rtmp_;
   }
 }
 
