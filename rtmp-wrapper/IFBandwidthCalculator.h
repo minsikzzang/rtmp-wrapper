@@ -14,6 +14,8 @@
 @property (nonatomic, assign) double outboundKBps;
 @property (nonatomic, assign) double outboundMBps;
 
+@property (nonatomic, assign) double durationForBandwidthCalculation;
+
 - (void)appendElapsed:(NSTimeInterval)elapsed withBytesOfWrite:(NSUInteger)bytes;
 
 @end

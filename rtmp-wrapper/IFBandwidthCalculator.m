@@ -8,7 +8,7 @@
 
 #import "IFBandwidthCalculator.h"
 
-const double kDurationForBandwidthCalculation = 4.0;
+const double kDurationForBandwidthCalculation = 5.0;
 
 @interface IFBandwidthCalculator() {
   double totalElapsedOfWrite_;
@@ -21,6 +21,7 @@ const double kDurationForBandwidthCalculation = 4.0;
 
 @implementation IFBandwidthCalculator
 
+@synthesize durationForBandwidthCalculation;
 @synthesize outboundBps;
 @synthesize outboundKBps;
 @synthesize outboundMBps;
@@ -30,6 +31,7 @@ const double kDurationForBandwidthCalculation = 4.0;
   if (self) {
     totalElapsedOfWrite_ = 0.0;
     totalBytesOfWrite_ = 0;
+    durationForBandwidthCalculation = kDurationForBandwidthCalculation;
   }
   return self;
 }
@@ -39,12 +41,12 @@ const double kDurationForBandwidthCalculation = 4.0;
   totalElapsedOfWrite_ += elapsed;
   totalBytesOfWrite_ += bytes;
   
+  self.outboundBps = [self getBandwidthInBps:totalElapsedOfWrite_
+                                       bytes:totalBytesOfWrite_];
+  self.outboundKBps = self.outboundBps / 1024;
+  self.outboundMBps = self.outboundKBps / 1024;
+  
   if (totalElapsedOfWrite_ > kDurationForBandwidthCalculation) {
-    self.outboundBps = [self getBandwidthInBps:totalElapsedOfWrite_
-                                         bytes:totalBytesOfWrite_];
-    self.outboundKBps = self.outboundBps / 1024;
-    self.outboundMBps = self.outboundKBps / 1024;
-    
     totalElapsedOfWrite_ = 0;
     totalBytesOfWrite_ = 0;
   }
