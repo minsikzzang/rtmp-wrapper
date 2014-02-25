@@ -43,10 +43,28 @@ typedef enum RTMPWritePriority {
  */
 - (BOOL)openWithURL:(NSString *)url enableWrite:(BOOL)enableWrite;
 
+/**
+ @abstract
+  Close current connection / release all the resources
+ */
 - (void)close;
 
+/**
+ @abstract
+  Write the given data to open rtmp connection
+ 
+ @param data A buffer to write
+ */
 - (NSUInteger)write:(NSData *)data;
 
+/**
+ @abstract
+  Create all required resources for opening RTMP connection to the given URL
+ 
+ @param url
+ @param enableWrite If YES, it will be able to write data to the URL
+ @param handler Completion handler
+ */
 - (void)openWithURL:(NSString *)url
         enableWrite:(BOOL)enableWrite
      withCompletion:(OpenCompleteHandler)handler;
@@ -60,7 +78,15 @@ typedef enum RTMPWritePriority {
  */
 - (void)write:(NSData *)data
 withCompletion:(WriteCompleteHandler)completion;
-  
+
+/**
+ @abstract
+  Asynchronous rtmp write function with priority
+ 
+ @param data
+ @param priority
+ @param completion
+ */
 - (void)write:(NSData *)data
  withPriority:(RTMPWritePriority)priority
 withCompletion:(WriteCompleteHandler)completion;
@@ -81,6 +107,7 @@ withCompletion:(WriteCompleteHandler)completion;
 @property (nonatomic, assign) NSUInteger maxBufferSizeInKbyte;
 @property (nonatomic, assign) NSUInteger openTimeout;
 @property (nonatomic, assign) NSUInteger writeTimeout;
+@property (nonatomic, assign) double outboundBandwidthInKbps;
 
 
 @end

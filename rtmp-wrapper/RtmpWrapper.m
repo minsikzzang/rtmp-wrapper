@@ -10,6 +10,7 @@
 #import <librtmp/rtmp.h>
 #import <librtmp/log.h>
 #import "IFTimeoutBlock.h"
+#import "IFBandwidthCalculator.h"
 
 const NSUInteger kRtmpOpenTimeout = 5;
 const NSUInteger kRtmpWriteTimeout = 5;
@@ -24,6 +25,7 @@ NSString *const kErrorDomain = @"com.ifactory.lab.rtmp.wrapper";
   NSMutableArray *flvBuffer_;
   // Lock to protect writeQueueInUse_ variables from multi threaded access
   NSObject *lock_;
+  IFBandwidthCalculator *bandwidth_;
 }
 
 - (void)internalWrite:(id)buffer;
@@ -50,6 +52,7 @@ NSString *const kErrorDomain = @"com.ifactory.lab.rtmp.wrapper";
 @synthesize maxBufferSizeInKbyte;
 @synthesize openTimeout;
 @synthesize writeTimeout;
+@synthesize outboundBandwidthInKbps;
 
 void rtmpLog(int level, const char *fmt, va_list args) {
   NSString *log = @"";
@@ -91,6 +94,7 @@ void rtmpLog(int level, const char *fmt, va_list args) {
     writeQueueInUse_ = NO;
     openTimeout = kRtmpOpenTimeout;
     writeTimeout = kRtmpWriteTimeout;
+    bandwidth_ = [[IFBandwidthCalculator alloc] init];
     
     signal(SIGPIPE, SIG_IGN);
     
@@ -111,6 +115,7 @@ void rtmpLog(int level, const char *fmt, va_list args) {
   if (lock_) {
     [lock_ release];
   }
+  [bandwidth_ release];
   [self close];  
   [super dealloc];
 }
@@ -343,7 +348,14 @@ withCompletion:(WriteCompleteHandler)completion {
   @synchronized (self) {
     int sent = -1;
     if (self.connected) {
+      NSDate *start = [NSDate date];
       sent = RTMP_Write(rtmp_, [data bytes], [data length]);
+      // Caculate time difference between the starting point and
+      // now
+      NSTimeInterval elapsed = [[NSDate date] timeIntervalSinceDate:start];
+      [bandwidth_ appendElapsed:elapsed withBytesOfWrite:sent];
+      self.outboundBandwidthInKbps = bandwidth_.outboundKBps;
+      // NSLog(@"Elapsed %f seconds for %d bytes (%f kbps)", elapsed, sent, bandwidth_.outboundKBps);
     }
     return sent;
   }
