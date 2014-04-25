@@ -19,13 +19,12 @@ const char *kOpenQueue = "com.ifactory.lab.rtmp.open.queue";
 NSString *const kErrorDomain = @"com.ifactory.lab.rtmp.wrapper";
 
 @interface RtmpWrapper () {
-  RTMP *rtmp_;
-  BOOL connected_;
-  BOOL writeQueueInUse_;
-  NSMutableArray *flvBuffer_;
+  RTMP *_rtmp;
+  BOOL _connected;
+  BOOL _writeQueueInUse;
   // Lock to protect writeQueueInUse_ variables from multi threaded access
-  NSObject *lock_;
-  IFBandwidthCalculator *bandwidth_;
+  NSObject *_lock;
+  IFBandwidthCalculator *_bandwidth;
 }
 
 - (void)internalWrite:(id)buffer;
@@ -46,13 +45,14 @@ NSString *const kErrorDomain = @"com.ifactory.lab.rtmp.wrapper";
 @implementation RtmpWrapper
 
 @synthesize connected = connected_;
-@synthesize rtmpUrl;
+@synthesize rtmpUrl = _rtmpUrl;
 @synthesize writeEnable;
 @synthesize bufferSize;
 @synthesize maxBufferSizeInKbyte;
-@synthesize openTimeout;
-@synthesize writeTimeout;
+@synthesize openTimeout = _openTimeout;
+@synthesize writeTimeout = _writeTimeout;
 @synthesize outboundBandwidthInKbps;
+@synthesize flvBuffer = _flvBuffer;
 
 void rtmpLog(int level, const char *fmt, va_list args) {
   NSString *log = @"";
@@ -86,15 +86,15 @@ void rtmpLog(int level, const char *fmt, va_list args) {
 - (id)init {
   self = [super init];
   if (self != nil) {
-    connected_ = NO;
-    flvBuffer_ = [[NSMutableArray alloc] init];
-    lock_ = [[NSObject alloc] init];
+    _connected = NO;
+    _flvBuffer = [[NSMutableArray alloc] init];
+    _lock = [[NSObject alloc] init];
     maxBufferSizeInKbyte = kMaxBufferSizeInKbyte;
     bufferSize = 0;
-    writeQueueInUse_ = NO;
-    openTimeout = kRtmpOpenTimeout;
-    writeTimeout = kRtmpWriteTimeout;
-    bandwidth_ = [[IFBandwidthCalculator alloc] init];
+    _writeQueueInUse = NO;
+    _openTimeout = kRtmpOpenTimeout;
+    _writeTimeout = kRtmpWriteTimeout;
+    _bandwidth = [[IFBandwidthCalculator alloc] init];
     
     signal(SIGPIPE, SIG_IGN);
     
@@ -105,19 +105,25 @@ void rtmpLog(int level, const char *fmt, va_list args) {
 }
 
 - (void)dealloc {
+  _rtmpUrl = nil;
+  _bandwidth = nil;
+  [self clearBuffer];
+  [self close];
+  /*
   if (rtmpUrl) {
     [rtmpUrl release];
   }
-  [self clearBuffer];
+  
   if (flvBuffer_) {
     [flvBuffer_ release];
   }
   if (lock_) {
     [lock_ release];
   }
-  [bandwidth_ release];
-  [self close];  
-  [super dealloc];
+   [bandwidth_ release];
+   
+   [super dealloc];
+   */
 }
 
 - (void)setLogInfo {
@@ -133,7 +139,7 @@ void rtmpLog(int level, const char *fmt, va_list args) {
   NSError *err = [NSError errorWithDomain:kErrorDomain
                                      code:errorCode
                                  userInfo:userinfo];
-  [userinfo release];
+  // [userinfo release];
   return err;
 }
 
@@ -158,7 +164,8 @@ void rtmpLog(int level, const char *fmt, va_list args) {
       // We have to release handler object because we copied earlier for safety
       // of multithread use
       handler(-1, error);
-      [handler release];
+      handler = nil;
+      // [handler release];
     }
   }
 }
@@ -167,9 +174,10 @@ void rtmpLog(int level, const char *fmt, va_list args) {
                   withCompletion:(WriteCompleteHandler)completion {
   NSMutableDictionary *b = [[NSMutableDictionary alloc] init];
   [b setObject:data forKey:@"data"];
-  [b setObject:[NSString stringWithFormat:@"%d", data.length] forKey:@"length"];
+  [b setObject:[NSString stringWithFormat:@"%d", (int)data.length] forKey:@"length"];
   [b setObject:[completion copy] forKey:@"completion"];
-  return [b autorelease];
+  // return [b autorelease];
+  return b;
 }
 
 - (void)appendData:(NSData *)data
@@ -183,7 +191,7 @@ void rtmpLog(int level, const char *fmt, va_list args) {
   if (item) {
     NSData *data = [item objectForKey:@"data"];
     NSUInteger length = [[item objectForKey:@"length"] integerValue];
-    WriteCompleteHandler handler = [item objectForKey:@"completion"];
+    __block WriteCompleteHandler handler = [item objectForKey:@"completion"];
     __block NSUInteger sent = -1;
     
     IFTimeoutHandler timeoutBlock = ^(IFTimeoutBlock *block) {
@@ -192,7 +200,8 @@ void rtmpLog(int level, const char *fmt, va_list args) {
                                        andCode:RTMPErrorWriteTimeout];
       if (handler) {
         handler(sent, error);
-        [handler release];
+        handler = nil;
+        // [handler release];
       }
       
       self.writeQueueInUse = NO;
@@ -205,7 +214,7 @@ void rtmpLog(int level, const char *fmt, va_list args) {
         error =
           [RtmpWrapper errorRTMPFailedWithReason:
            [NSString stringWithFormat:@"Failed to write data "
-                                       "(sent: %d, length: %d)", sent, length]
+                                       "(sent: %ld, length: %ld)", sent, length]
                                          andCode:RTMPErrorWriteFail];
       }
       
@@ -214,7 +223,8 @@ void rtmpLog(int level, const char *fmt, va_list args) {
       if (!b.timedOut) {
         if (handler) {
           handler(sent, error);
-          [handler release];
+          handler = nil;
+          // [handler release];
         }
         // If there is no error and there are more buffers to be sent,
         // call itself again.
@@ -229,10 +239,10 @@ void rtmpLog(int level, const char *fmt, va_list args) {
     };
     
     IFTimeoutBlock *block = [[IFTimeoutBlock alloc] init];
-    [block setExecuteAsyncWithTimeout:writeTimeout
+    [block setExecuteAsyncWithTimeout:(int)_writeTimeout
                           WithHandler:timeoutBlock
                     andExecutionBlock:executionBlock];
-    [block release];
+    // [block release];
   }
 }
 
@@ -267,10 +277,10 @@ void rtmpLog(int level, const char *fmt, va_list args) {
     }
   };
   
-  [block setExecuteAsyncWithTimeout:openTimeout
+  [block setExecuteAsyncWithTimeout:(int)_openTimeout
                         WithHandler:timeoutBlock
                   andExecutionBlock:execution];
-  [block release];
+  // [block release];
 }
 
 - (void)write:(NSData *)data
@@ -315,16 +325,16 @@ withCompletion:(WriteCompleteHandler)completion {
 - (BOOL)openWithURL:(NSString *)url enableWrite:(BOOL)enableWrite {
   @synchronized (self) {
     // If still opened or not nil, close it.
-    if (rtmp_) {
+    if (_rtmp) {
       [self close];
     }
     
     // Allocate rtmp context object
-    rtmp_ = RTMP_Alloc();
+    _rtmp = RTMP_Alloc();
     
-    RTMP_Init(rtmp_);
+    RTMP_Init(_rtmp);
     char *strUrl = (char *)[url cStringUsingEncoding:NSASCIIStringEncoding];
-    if (!RTMP_SetupURL(rtmp_, strUrl)) {
+    if (!RTMP_SetupURL(_rtmp, strUrl)) {
       return NO;
     }
     
@@ -332,14 +342,14 @@ withCompletion:(WriteCompleteHandler)completion {
     self.writeEnable = enableWrite;
     
     if (enableWrite) {
-      RTMP_EnableWrite(rtmp_);
+      RTMP_EnableWrite(_rtmp);
     }
     
-    if (!RTMP_Connect(rtmp_, NULL) || !RTMP_ConnectStream(rtmp_, 0)) {
+    if (!RTMP_Connect(_rtmp, NULL) || !RTMP_ConnectStream(_rtmp, 0)) {
       return NO;
     }
     
-    connected_ = RTMP_IsConnected(rtmp_);
+    connected_ = RTMP_IsConnected(_rtmp);
     return YES;
   }
 }
@@ -349,12 +359,12 @@ withCompletion:(WriteCompleteHandler)completion {
     int sent = -1;
     if (self.connected) {
       NSDate *start = [NSDate date];
-      sent = RTMP_Write(rtmp_, [data bytes], [data length]);
+      sent = RTMP_Write(_rtmp, [data bytes], (int)[data length]);
       // Caculate time difference between the starting point and
       // now
       NSTimeInterval elapsed = [[NSDate date] timeIntervalSinceDate:start];
-      [bandwidth_ appendElapsed:elapsed withBytesOfWrite:sent];
-      self.outboundBandwidthInKbps = bandwidth_.outboundKBps;
+      [_bandwidth appendElapsed:elapsed withBytesOfWrite:sent];
+      self.outboundBandwidthInKbps = _bandwidth.outboundKBps;
       // NSLog(@"Elapsed %f seconds for %d bytes (%f kbps)", elapsed, sent, bandwidth_.outboundKBps);
     }
     return sent;
@@ -362,25 +372,26 @@ withCompletion:(WriteCompleteHandler)completion {
 }
 
 - (void)clearBuffer {
-   @synchronized (flvBuffer_) {
-     for (id b in flvBuffer_) {
+   @synchronized (_flvBuffer) {
+     for (id b in _flvBuffer) {
        if (!b || ![b isKindOfClass:[NSDictionary class]]) {
          continue;
        }
        WriteCompleteHandler handler = [b objectForKey:@"completion"];
        if (handler) {
-         [handler release];
+         handler = nil;
+         // [handler release];
        }
      }
-     [flvBuffer_ removeAllObjects];
+     [_flvBuffer removeAllObjects];
    }
 }
 
 - (BOOL)isConnected {
   @synchronized (self) {
     connected_ = NO;
-    if (rtmp_) {
-      connected_ = RTMP_IsConnected(rtmp_);
+    if (_rtmp) {
+      connected_ = RTMP_IsConnected(_rtmp);
     }
     return connected_;
   }
@@ -388,13 +399,13 @@ withCompletion:(WriteCompleteHandler)completion {
 
 - (void)close {
   @synchronized (self) {
-    if (rtmp_) {
+    if (_rtmp) {
       // Close rtmp connection
-      RTMP_Close(rtmp_);
+      RTMP_Close(_rtmp);
       
       // Release rtmp context
-      RTMP_Free(rtmp_);
-      rtmp_ = nil;
+      RTMP_Free(_rtmp);
+      _rtmp = nil;
     }
   }
 }
@@ -407,50 +418,39 @@ withCompletion:(WriteCompleteHandler)completion {
 #pragma mark Setters and Getters Methods
 
 - (id)popFirstBuffer {
-  @synchronized (flvBuffer_) {
+  @synchronized (self.flvBuffer) {
     id obj = nil;
-    if (flvBuffer_.count > 0) {
-      obj = flvBuffer_.firstObject;
+    if (_flvBuffer.count > 0) {
+      obj = _flvBuffer.firstObject;
       if (obj) {
         bufferSize -= [[obj objectForKey:@"length"] integerValue];
-        [obj retain];
-        [flvBuffer_ removeObject:obj];
+        // [obj retain];
+        [_flvBuffer removeObject:obj];
       }
     }
-    return [obj autorelease];
+    // return [obj autorelease];
+    return obj;
   }
 }
 
 - (void)pushBuffer:(id)obj {
-  @synchronized (flvBuffer_) {
+  @synchronized (_flvBuffer) {
     if (obj) {
       bufferSize += [[obj objectForKey:@"length"] integerValue];
-      [flvBuffer_ addObject:obj];      
+      [self.flvBuffer addObject:obj];
     }
   }
 }
 
-- (NSMutableArray *)flvBuffer {
-  @synchronized (flvBuffer_) {
-    return flvBuffer_;
-  }
-}
-
-- (void)setFlvBuffer:(NSMutableArray *)b {
-  @synchronized (flvBuffer_) {
-    flvBuffer_ = b;
-  }
-}
-
 - (BOOL)writeQueueInUse {
-  @synchronized (lock_) {
-    return writeQueueInUse_;
+  @synchronized (_lock) {
+    return _writeQueueInUse;
   }
 }
 
 - (void)setWriteQueueInUse:(BOOL)inUse {
-  @synchronized (lock_) {
-    writeQueueInUse_ = inUse;
+  @synchronized (_lock) {
+    _writeQueueInUse = inUse;
   }
 }
 

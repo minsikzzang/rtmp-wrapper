@@ -70,6 +70,9 @@ if (ret) {
 
 ## Version detail
 
+### 1.0.8
+- arc enabled
+
 ### 1.0.6
 - async open / write added
 - autoreconnect removed

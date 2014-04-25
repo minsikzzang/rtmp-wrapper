@@ -37,7 +37,7 @@ NSString const* kSourceMP4 = @"http://clips.vorwaerts-gmbh.de/big_buck_bunny.mp4
   BOOL ret = [rtmp openWithURL:kRtmpEP enableWrite:YES];
   XCTAssertTrue(ret);
   [rtmp close];
-  [rtmp release];
+  // [rtmp release];
 }
 
 - (void)testAsyncOpenUrlSuccess {
@@ -54,10 +54,10 @@ NSString const* kSourceMP4 = @"http://clips.vorwaerts-gmbh.de/big_buck_bunny.mp4
   while (dispatch_semaphore_wait(semaphore, DISPATCH_TIME_NOW))
     [[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode
                              beforeDate:[NSDate dateWithTimeIntervalSinceNow:1]];
-  dispatch_release(semaphore);
+  // dispatch_release(semaphore);
   
   [rtmp close];
-  [rtmp release];
+  // [rtmp release];
 }
 
 - (void)testAsyncOpenUrlFail {
@@ -76,10 +76,10 @@ NSString const* kSourceMP4 = @"http://clips.vorwaerts-gmbh.de/big_buck_bunny.mp4
   while (dispatch_semaphore_wait(semaphore, DISPATCH_TIME_NOW))
     [[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode
                              beforeDate:[NSDate dateWithTimeIntervalSinceNow:1]];
-  dispatch_release(semaphore);
+  // dispatch_release(semaphore);
   
   [rtmp close];
-  [rtmp release];
+  // [rtmp release];
 }
 
 - (void)testPublishStream {
@@ -114,7 +114,7 @@ NSString const* kSourceMP4 = @"http://clips.vorwaerts-gmbh.de/big_buck_bunny.mp4
   }
   
   [rtmp close];
-  [rtmp release];
+  // [rtmp release];
 }
 
 - (void)testIsRTMPConnected {
@@ -127,7 +127,7 @@ NSString const* kSourceMP4 = @"http://clips.vorwaerts-gmbh.de/big_buck_bunny.mp4
   [rtmp close];
   XCTAssertFalse(rtmp.connected);
   
-  [rtmp release];
+  // [rtmp release];
 }
 
 - (void)testSendToBrokenConnection {
@@ -162,7 +162,7 @@ NSString const* kSourceMP4 = @"http://clips.vorwaerts-gmbh.de/big_buck_bunny.mp4
     } while (offset < length);
   }
   
-  [rtmp release];
+  // [rtmp release];
 }
 
 - (void)testManualReconnect {
@@ -204,7 +204,7 @@ NSString const* kSourceMP4 = @"http://clips.vorwaerts-gmbh.de/big_buck_bunny.mp4
   }
   
   [rtmp close];
-  [rtmp release];
+  // [rtmp release];
 }
 
 - (void)testAsyncWriteSingleData {
@@ -231,10 +231,10 @@ NSString const* kSourceMP4 = @"http://clips.vorwaerts-gmbh.de/big_buck_bunny.mp4
                              beforeDate:[NSDate dateWithTimeIntervalSinceNow:1]];
   }
   
-  dispatch_release(semaphore);
+  // dispatch_release(semaphore);
   
   [rtmp close];
-  [rtmp release];
+  // [rtmp release];
 }
 
 - (void)testAsyncWriteBufferOverflow {
@@ -287,10 +287,10 @@ NSString const* kSourceMP4 = @"http://clips.vorwaerts-gmbh.de/big_buck_bunny.mp4
                              beforeDate:[NSDate dateWithTimeIntervalSinceNow:1]];
   }
   
-  dispatch_release(semaphore);
+  // dispatch_release(semaphore);
   
   [rtmp close];
-  [rtmp release];
+  // [rtmp release];
 }
 
 - (void)testAsyncWriteMultiData {
@@ -350,10 +350,10 @@ NSString const* kSourceMP4 = @"http://clips.vorwaerts-gmbh.de/big_buck_bunny.mp4
                              beforeDate:[NSDate dateWithTimeIntervalSinceNow:1]];
   }
   
-  dispatch_release(semaphore);
+  // dispatch_release(semaphore);
   
   [rtmp close];
-  [rtmp release];
+  // [rtmp release];
 }
 
 - (void)testClearBuffer {
@@ -404,10 +404,10 @@ NSString const* kSourceMP4 = @"http://clips.vorwaerts-gmbh.de/big_buck_bunny.mp4
                              beforeDate:[NSDate dateWithTimeIntervalSinceNow:1]];
   }
   
-  dispatch_release(semaphore);
+  // dispatch_release(semaphore);
   
   [rtmp close];
-  [rtmp release];
+  // [rtmp release];
 }
 
 
